@@ -3,11 +3,14 @@ import { useAuth } from '../lib/auth.jsx'
 import Icon from '../components/Icon.jsx'
 import RewardsSection from './Rewards.jsx'
 
-// Manager Hub: resources for managers, plus Rewards & Recognition as a section
-// that only sepo_managers (and admin) can see.
+// Manager Hub: resources for managers, plus Rewards & Recognition as a section.
+// R&R is visible to nominating managers (sepo_manager, who see only their own
+// nominations) and to the small R&R team (isRewardsManager, who see everything,
+// amounts and delivery). A plain VIBE admin who is neither does NOT see R&R.
 export default function ManagerHub() {
   const { links } = useStore()
-  const { isSepoManager } = useAuth()
+  const { role, isRewardsManager } = useAuth()
+  const canSeeRewards = isRewardsManager || role === 'sepo_manager'
   const art = links.find((l) => l.managerOnly)
 
   const cards = [
@@ -39,8 +42,8 @@ export default function ManagerHub() {
         ))}
       </div>
 
-      {/* Rewards & Recognition: only for sepo_manager (and admin). */}
-      {isSepoManager && (
+      {/* Rewards & Recognition: nominating managers + the R&R team only. */}
+      {canSeeRewards && (
         <div style={{ marginTop: 40 }}>
           <div className="section-title" style={{ fontSize: 15, textTransform: 'none', letterSpacing: 0 }}>
             <Icon name="award" size={18} />

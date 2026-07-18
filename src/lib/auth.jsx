@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { ROLE_ALLOWLIST } from '../data/seed.js'
+import { ROLE_ALLOWLIST, RR_MANAGERS } from '../data/seed.js'
 
 // ---------------------------------------------------------------------------
 // Auth / role context
@@ -50,6 +50,9 @@ export function AuthProvider({ children }) {
     isAdmin: role === 'admin',
     isSepoManager: role === 'sepo_manager' || role === 'admin',
     isManager: ROLES[role].rank >= ROLES.manager.rank,
+    // Only the small R&R team can see/manage Rewards & Recognition (all
+    // nominations, delivery, amounts). Independent of the admin role.
+    isRewardsManager: RR_MANAGERS.includes(login),
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

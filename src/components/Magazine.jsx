@@ -45,7 +45,7 @@ export default function Magazine({ edition }) {
   const imgPages = edition.pages || []
   const pageCount = isPdf ? pdfPageCount : imgPages.length
   const coverSrc = !isPdf ? imgPages[0] : null
-  const FLIP_W = 420
+  const FLIP_W = 550 // larger page (800x1131 ratio) for a roomier reader
 
   const flip = (dir) => {
     const api = book.current?.pageFlip?.()
@@ -53,13 +53,13 @@ export default function Magazine({ edition }) {
     dir < 0 ? api.flipPrev() : api.flipNext()
   }
 
-  // Closed state: show only the cover with an animated loader + open button.
+  // Closed state: show only the cover with a skeleton placeholder + open button.
   const closedView = (
     <div className="mag-cover">
       <div className="mag-cover-inner">
         {isPdf
-          ? <PdfPage pageNumber={1} width={FLIP_W} renderTextLayer={false} renderAnnotationLayer={false} loading={<CoverLoader />} />
-          : coverSrc ? <img src={coverSrc} alt="Portada" decoding="async" /> : <CoverLoader />}
+          ? <PdfPage pageNumber={1} width={FLIP_W} renderTextLayer={false} renderAnnotationLayer={false} loading={<div className="skeleton skeleton-fill" />} />
+          : coverSrc ? <img src={coverSrc} alt="Portada" decoding="async" /> : <div className="skeleton skeleton-fill" />}
         <button className="mag-open" onClick={() => setOpened(true)}>
           <Icon name="idea" size={16} /> Abrir revista
         </button>
@@ -74,8 +74,8 @@ export default function Magazine({ edition }) {
 
   const flipbook = pageCount > 0 && (
     <HTMLFlipBook
-      width={FLIP_W} height={594}
-      size="stretch" minWidth={280} maxWidth={520} minHeight={396} maxHeight={735}
+      width={FLIP_W} height={Math.round(FLIP_W * 1131 / 800)}
+      size="stretch" minWidth={360} maxWidth={680} minHeight={509} maxHeight={961}
       maxShadowOpacity={0.4} showCover={true} mobileScrollSupport={true}
       ref={book} className="mag-book" onFlip={(e) => setCurrent(e.data)}
     >
@@ -116,21 +116,11 @@ export default function Magazine({ edition }) {
   if (isPdf) {
     return (
       <Document file={edition.pdf} onLoadSuccess={({ numPages }) => setPdfPageCount(numPages)}
-        loading={<CoverLoader />}
+        loading={<div className="mag-cover"><div className="mag-cover-inner"><div className="skeleton skeleton-fill" /></div></div>}
         error={<div className="empty">No se pudo cargar el PDF.</div>}>
         {body}
       </Document>
     )
   }
   return body
-}
-
-// Animated cosmic loader shown while the cover (or PDF) is loading.
-function CoverLoader() {
-  return (
-    <div className="mag-loader" role="status" aria-label="Cargando">
-      <div className="mag-loader-ring" />
-      <span>Cargando...</span>
-    </div>
-  )
 }

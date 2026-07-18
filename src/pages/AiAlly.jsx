@@ -5,12 +5,25 @@ import Icon from '../components/Icon.jsx'
 
 // "AI is your ally" magazine, in its own public tab. Because this whole route
 // is code-split (React.lazy in App), pdf.js and the flip engine only load when
-// a user opens this page, keeping the rest of the app light.
+// a user opens this page, keeping the rest of the app light. The flip reader
+// needs a wide screen, so on mobile we show a note instead.
 export default function AiAlly() {
   const { aiEditions } = useStore()
   const editions = [...(aiEditions || [])].sort((a, b) => b.id.localeCompare(a.id))
   const [editionId, setEditionId] = useState(() => (editions.find((e) => e.current) || editions[0])?.id)
   const edition = editions.find((e) => e.id === editionId) || editions[0]
+
+  if (!edition) {
+    return (
+      <div>
+        <div className="page-head">
+          <div className="skeleton" style={{ width: 220, height: 28, borderRadius: 'var(--radius)' }} />
+          <div className="skeleton" style={{ width: 380, height: 16, borderRadius: 'var(--radius-sm)', marginTop: 8 }} />
+        </div>
+        <div className="mag-cover"><div className="mag-cover-inner"><div className="skeleton skeleton-fill" /></div></div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -28,7 +41,14 @@ export default function AiAlly() {
         )}
       </div>
 
-      <Magazine edition={edition} />
+      {/* Magazine: large on desktop, hidden on mobile (flip needs a wide screen) */}
+      <div className="mag-desktop-only">
+        <Magazine edition={edition} />
+      </div>
+      <div className="mag-mobile-note">
+        <Icon name="idea" size={18} />
+        <span>La revista interactiva esta disponible en computadora. Abrela desde un navegador de escritorio para pasar las paginas.</span>
+      </div>
     </div>
   )
 }

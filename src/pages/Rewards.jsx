@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { REWARDS, REWARD_DEADLINES, CADENCES, CURRENT_PERIOD, NOMINATION_TIPS, PROGRAM_INFO, periodOptions } from '../data/seed.js'
+import { REWARDS, REWARD_DEADLINES, CADENCES, CURRENT_PERIOD, periodOptions } from '../data/seed.js'
 import { useStore } from '../lib/store.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { countdown } from '../lib/format.js'
 import Icon from '../components/Icon.jsx'
 
-// Rewards & Recognition now lives INSIDE Manager Hub as a section, visible only
-// to sepo_manager (and admin). It is not a standalone route anymore.
+// Format a gift-card amount (USD). Only shown to the R&R team.
+const fmtAmount = (a) => (typeof a === 'number' ? `$${a}` : '')
+
+// Rewards & Recognition lives INSIDE Manager Hub. Nominating managers see and
+// submit their OWN nominations; only the small R&R team (isRewardsManager) sees
+// every nomination, marks delivery, and sees award amounts.
 export default function RewardsSection() {
-  const { login, isAdmin } = useAuth()
+  const { login, isRewardsManager, isAdmin } = useAuth()
   const { awards } = useStore()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -27,10 +31,13 @@ export default function RewardsSection() {
   }, [])
 
   const activeAwards = awards.filter((a) => a.active)
-  // Managers see their own submissions; VIBE admins see all (they deliver them).
-  const visible = isAdmin ? rewards : rewards.filter((r) => r.nominatedBy === login)
+  // Amount lookup by stable award id (for showing the value on nomination cards).
+  const amountFor = (awardId) => awards.find((a) => a.id === awardId)?.amount
+  // Nominating managers see their own submissions; the R&R team sees all (they
+  // deliver them and own the budget).
+  const visible = isRewardsManager ? rewards : rewards.filter((r) => r.nominatedBy === login)
 
-  // VIBE marks a nomination as delivered (this is delivery, not approval).
+  // The R&R team marks a nomination as delivered (this is delivery, not approval).
   const markDelivered = (id) =>
     setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, deliveryStatus: 'delivered', deliveredBy: login } : r)))
 
@@ -38,7 +45,7 @@ export default function RewardsSection() {
     <div>
       <div className="subtabs">
         <button className={tab === 'nominations' ? 'active' : ''} onClick={() => setTab('nominations')}>
-          <Icon name="trophy" size={15} /> {isAdmin ? 'Nominaciones y entrega' : 'Mis nominaciones'}
+          <Icon name="trophy" size={15} /> {isRewardsManager ? 'Nominaciones y entrega' : 'Mis nominaciones'}
         </button>
         <button className={tab === 'guide' ? 'active' : ''} onClick={() => setTab('guide')}>
           <Icon name="idea" size={15} /> Guia de premios
@@ -46,11 +53,9 @@ export default function RewardsSection() {
       </div>
 
       {tab === 'guide' ? (
-        <AwardGuide awards={awards} isAdmin={isAdmin} onManage={() => navigate('/admin?tab=Premios')} />
+        <AwardGuide awards={awards} isAdmin={isAdmin} showAmounts={isRewardsManager} onManage={() => navigate('/admin?tab=Premios')} />
       ) : (
         <>
-          <div className="notice" style={{ marginBottom: 20 }}>{PROGRAM_INFO}</div>
-
           {/* Deadlines are target dates, NOT blockers. Retroactive is allowed. */}
           <div className="section-title"><Icon name="clock" size={15} /><span>Deadlines objetivo por categoria</span></div>
           <div className="grid cols-4">
@@ -72,7 +77,7 @@ export default function RewardsSection() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '26px 0 12px' }}>
             <div className="section-title" style={{ margin: 0 }}>
               <Icon name="trophy" size={15} />
-              <span>{isAdmin ? 'Todas las nominaciones' : 'Mis nominaciones'}</span>
+              <span>{isRewardsManager ? 'Todas las nominaciones' : 'Mis nominaciones'}</span>
             </div>
             <button className="btn" onClick={() => setShowModal(true)}><Icon name="plus" size={16} /> Nominar</button>
           </div>
@@ -81,7 +86,9 @@ export default function RewardsSection() {
             <div className="empty">Aun no hay nominaciones. Reconoce a alguien.</div>
           ) : (
             <div className="grid cols-2" ref={listRef}>
-              {visible.map((r) => (
+              {visible.map((r) => {
+                const amount = amountFor(r.awardId)
+                return (
                 <div key={r.id} className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <span className="tag"><Icon name="award" size={12} /> {r.awardName}</span>
@@ -90,13 +97,16 @@ export default function RewardsSection() {
                     </span>
                   </div>
                   <h3>{r.nominee}</h3>
-                  <p>{r.reason}</p>
-                  <p className="muted" style={{ marginTop: 10, fontSize: 12, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <p className="muted" style={{ marginTop: 6, fontSize: 12, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                     {r.cadence}, {r.period}, por {r.nominatedBy}
                     {r.retroactive && <span className="pill retro"><Icon name="clock" size={11} /> Retroactivo</span>}
                   </p>
-                  {/* Only VIBE (admin) can mark delivery. Managers just see status. */}
-                  {isAdmin && r.deliveryStatus !== 'delivered' && (
+                  {/* Amount is R&R-team only (they own the budget). */}
+                  {isRewardsManager && typeof amount === 'number' && (
+                    <div className="reward-amount"><Icon name="trophy" size={13} /> {fmtAmount(amount)}</div>
+                  )}
+                  {/* Only the R&R team can mark delivery. Managers just see status. */}
+                  {isRewardsManager && r.deliveryStatus !== 'delivered' && (
                     <button className="btn sm" style={{ marginTop: 12 }} onClick={() => markDelivered(r.id)}>
                       <Icon name="award" size={14} /> Marcar como entregado
                     </button>
@@ -105,7 +115,8 @@ export default function RewardsSection() {
                     <p className="muted" style={{ marginTop: 8, fontSize: 11 }}>Entregado por {r.deliveredBy}</p>
                   )}
                 </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </>
@@ -115,6 +126,7 @@ export default function RewardsSection() {
         <NominateModal
           login={login}
           awards={activeAwards}
+          showAmounts={isRewardsManager}
           onClose={() => setShowModal(false)}
           onSave={(r) => { setRewards((prev) => [{ ...r, id: 'rew_' + Date.now() }, ...prev]); setShowModal(false) }}
         />
@@ -124,7 +136,7 @@ export default function RewardsSection() {
 }
 
 // Knowledge guide: one clear card per award grouped by cadence.
-function AwardGuide({ awards, isAdmin, onManage }) {
+function AwardGuide({ awards, isAdmin, showAmounts, onManage }) {
   const active = awards.filter((a) => a.active)
   return (
     <div>
@@ -152,6 +164,9 @@ function AwardGuide({ awards, isAdmin, onManage }) {
                   <div className="guide-head">
                     <span className="guide-ico"><Icon name={a.icon} size={20} /></span>
                     <h3>{a.name}</h3>
+                    {showAmounts && typeof a.amount === 'number' && (
+                      <span className="reward-amount sm" style={{ marginLeft: 'auto' }}>${a.amount}</span>
+                    )}
                   </div>
                   <p className="guide-desc">{a.description}</p>
                   <div className="guide-row"><span className="guide-k">Por que</span><span>{a.why}</span></div>
@@ -167,13 +182,12 @@ function AwardGuide({ awards, isAdmin, onManage }) {
   )
 }
 
-function NominateModal({ login, awards, onClose, onSave }) {
+function NominateModal({ login, awards, showAmounts, onClose, onSave }) {
   const [cadence, setCadence] = useState('Monthly')
   const cadenceAwards = awards.filter((a) => a.cadence === cadence).sort((a, b) => (a.order || 0) - (b.order || 0))
   const [awardId, setAwardId] = useState(cadenceAwards[0]?.id || '')
   const [period, setPeriod] = useState(CURRENT_PERIOD.Monthly)
   const [nominee, setNominee] = useState('')
-  const [reason, setReason] = useState('')
 
   const onCadence = (val) => {
     setCadence(val)
@@ -203,7 +217,12 @@ function NominateModal({ login, awards, onClose, onSave }) {
 
         {award && (
           <div className="award-hint">
-            <div className="award-hint-head"><Icon name={award.icon} size={16} /><strong>{award.name}</strong></div>
+            <div className="award-hint-head">
+              <Icon name={award.icon} size={16} /><strong>{award.name}</strong>
+              {showAmounts && typeof award.amount === 'number' && (
+                <span className="reward-amount sm" style={{ marginLeft: 'auto' }}>${award.amount}</span>
+              )}
+            </div>
             <p>{award.description}</p>
             <p className="muted"><strong>Por que:</strong> {award.why}</p>
             <p className="muted"><strong>Quien califica:</strong> {award.eligibility}</p>
@@ -226,21 +245,12 @@ function NominateModal({ login, awards, onClose, onSave }) {
         <label>Nominado (login del investigador)</label>
         <input value={nominee} onChange={(e) => setNominee(e.target.value)} placeholder="ej. davisanc" />
 
-        <label>Razon de la nominacion</label>
-        <textarea value={reason} maxLength={600} onChange={(e) => setReason(e.target.value)} placeholder="Basate en las metricas: que logro, que impacto tuvo." />
-        <div className="char-count" style={{ color: reason.length > 540 ? 'var(--warn)' : 'var(--muted)' }}>
-          {reason.length}/600
-        </div>
-        <ul className="tips">
-          {NOMINATION_TIPS.map((t, i) => <li key={i}>{t}</li>)}
-        </ul>
-
         <div className="modal-actions">
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button
             className="btn"
-            disabled={!nominee || !reason || !award}
-            onClick={() => onSave({ awardId: award.id, awardName: award.name, cadence, period, retroactive: isRetro, nominee, reason, nominatedBy: login, deliveryStatus: 'pending' })}
+            disabled={!nominee || !award}
+            onClick={() => onSave({ awardId: award.id, awardName: award.name, cadence, period, retroactive: isRetro, nominee, nominatedBy: login, deliveryStatus: 'pending' })}
           >Enviar nominacion</button>
         </div>
       </div>

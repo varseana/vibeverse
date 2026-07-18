@@ -96,7 +96,7 @@ h1, h2, h3, .brand-name { font-family: var(--font-display); }
 .role-badge.sepo_manager { color: #ffd; background: rgba(255, 176, 32, 0.18); border-color: rgba(255,176,32,0.4); }
 .role-badge.manager { color: #bdf; background: rgba(111, 54, 125, 0.2); border-color: rgba(111, 54, 125,0.4); }
 
-.content { max-width: 1160px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
+.content { max-width: 1160px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; position: relative; z-index: 1; }
 
 /* ---------- shared components ---------- */
 .page-head { margin-bottom: 22px; }
@@ -282,11 +282,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   box-shadow: inset 0 0 0 1px var(--panel-brd);
 }
 .mag-page img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mag-skel {
-  width: 100%; height: 100%;
+/* Unified skeleton loading: a shimmering placeholder used everywhere instead of
+   spinners. `.skeleton` is the base; helpers set the shape/size. */
+.skeleton, .mag-skel {
   background: linear-gradient(110deg, var(--bg-2) 30%, rgba(159,134,215,0.12) 50%, var(--bg-2) 70%);
   background-size: 220% 100%; animation: magShimmer 1.4s infinite;
+  border-radius: var(--radius);
 }
+.mag-skel { width: 100%; height: 100%; border-radius: 0; }
+.skeleton-fill { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+.skeleton-text { height: 12px; margin: 8px 0; border-radius: var(--radius-sm); }
+@media (prefers-reduced-motion: reduce) { .skeleton, .mag-skel { animation-duration: 3s; } }
 @keyframes magShimmer { to { background-position: -220% 0; } }
 .mag-arrow {
   flex-shrink: 0; width: 42px; height: 42px; border-radius: var(--radius);
@@ -307,10 +313,46 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .mag-month { width: auto; min-width: 150px; }
 .mag-page canvas, .mag-page .react-pdf__Page { width: 100% !important; height: 100% !important; }
 
+/* AI is your ally promo: flyer left, description + actions right */
+.ally-promo {
+  display: flex; gap: 22px; align-items: stretch;
+  background: var(--panel); border: 1px solid var(--panel-brd);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 8px;
+}
+.ally-promo-flyer {
+  flex: 1 1 0; min-width: 0; min-height: 260px; border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--panel-brd); background: var(--bg-2);
+}
+.ally-promo-flyer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ally-promo-flyer-fallback {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; color: var(--vibe);
+}
+.ally-promo-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.ally-promo-body h3 { font-size: 22px; font-family: var(--font-display); }
+.ally-promo-desc { color: var(--muted); font-size: 14px; line-height: 1.55; }
+.ally-promo-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 8px; }
+
+/* magazine visibility: interactive flip on desktop only */
+.mag-desktop-only { display: block; }
+.mag-mobile-note { display: none; }
+@media (max-width: 760px) {
+  .ally-promo { flex-direction: column; }
+  .ally-promo-flyer { flex-basis: auto; max-width: 240px; align-self: center; aspect-ratio: 800 / 1131; min-height: 0; }
+  .mag-desktop-only { display: none; }
+  .mag-mobile-note {
+    display: flex; align-items: center; gap: 10px; margin-top: 16px;
+    padding: 14px 16px; border-radius: var(--radius);
+    background: rgba(159,134,215,0.1); border: 1px solid var(--panel-brd);
+    color: var(--muted); font-size: 13px;
+  }
+  .mag-mobile-note .vibe-ico { color: var(--vibe); flex-shrink: 0; }
+}
+
 /* closed cover: shows only page 1 until the reader opens the magazine */
 .mag-cover { display: flex; justify-content: center; padding: 10px 0; }
 .mag-cover-inner {
-  position: relative; width: 100%; max-width: 420px; aspect-ratio: 800 / 1131;
+  position: relative; width: 100%; max-width: 550px; aspect-ratio: 800 / 1131;
   border-radius: var(--radius); overflow: hidden; border: 1px solid var(--panel-brd);
   box-shadow: 0 18px 50px rgba(0,0,0,0.45); background: var(--bg-2);
 }
@@ -327,20 +369,36 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .mag-open:hover { transform: translateX(-50%) translateY(-2px); filter: brightness(1.08); }
 .mag-open:active { transform: translateX(-50%) translateY(0); }
 
-/* animated cosmic loader */
-.mag-loader {
-  position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 14px; color: var(--muted);
-  font-size: 13px; background: var(--bg-2);
+/* Admin: Home section show/hide toggles */
+.home-toggle-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 4px; border-bottom: 1px solid var(--panel-brd);
 }
-.mag-loader-ring {
-  width: 46px; height: 46px; border-radius: 50%;
-  border: 3px solid rgba(159, 134, 215, 0.2); border-top-color: var(--vibe);
-  animation: magSpin 0.9s linear infinite;
-  box-shadow: 0 0 18px var(--vibe-glow);
+.home-toggle-row:last-child { border-bottom: none; }
+.switch {
+  flex-shrink: 0; width: 44px; height: 24px; border-radius: var(--radius);
+  border: 1px solid var(--panel-brd); background: var(--bg-2);
+  position: relative; transition: background 0.18s, border-color 0.18s;
 }
-@keyframes magSpin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .mag-loader-ring { animation-duration: 2s; } }
+.switch.on { background: var(--vibe); border-color: var(--vibe); }
+.switch-knob {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  border-radius: var(--radius-sm); background: var(--text);
+  transition: transform 0.18s;
+}
+.switch.on .switch-knob { transform: translateX(20px); background: #fff; }
+
+/* Admin: standalone idea-flyer uploader (thumbnail + file input) */
+.ally-flyer-edit { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.ally-flyer-thumb {
+  flex: 0 0 64px; width: 64px; height: 90px; border-radius: var(--radius);
+  overflow: hidden; border: 1px solid var(--panel-brd); background: var(--bg-2);
+}
+.ally-flyer-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ally-flyer-thumb-empty {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted);
+}
+.ally-flyer-edit input[type="file"] { flex: 1; min-width: 0; }
 
 /* modal */
 .overlay { position: fixed; inset: 0; background: rgba(12, 7, 24, 0.72); backdrop-filter: blur(6px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; animation: overlayIn 0.2s ease; }
@@ -427,9 +485,14 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: none; b
 .award-hint-head { display: flex; align-items: center; gap: 8px; color: var(--vibe-2); margin-bottom: 6px; }
 .award-hint p { font-size: 13px; line-height: 1.45; margin-top: 2px; }
 
-.tips { margin: 8px 0 0; padding-left: 18px; }
-.tips li { font-size: 12px; color: var(--muted); line-height: 1.6; }
 .char-count { font-size: 11px; text-align: right; margin-top: 4px; font-variant-numeric: tabular-nums; }
+/* Gift-card amount chip: shown only to the R&R team. */
+.reward-amount {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+  font-weight: 800; font-size: 15px; color: var(--good);
+  font-variant-numeric: tabular-nums;
+}
+.reward-amount.sm { margin-top: 0; font-size: 13px; }
 .pill.retro { display: inline-flex; align-items: center; gap: 4px; color: var(--vibe-2); background: rgba(209, 160, 226, 0.12); border-color: rgba(209, 160, 226, 0.35); }
 .retro-note {
   display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 8px 12px;
@@ -491,3 +554,462 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: none; b
 /* admin flyer thumbnail */
 .flyer-thumb { width: 100%; aspect-ratio: 96/42; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--panel-brd); margin-bottom: 8px; }
 .home-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--vibe), var(--vibe-2)); color: #fff; }
+
+/* floating logo background (zero-gravity, always behind everything) */
+.floating-logo-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.floating-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  opacity: 0.14;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  will-change: transform, opacity;
+  filter: brightness(1.3) drop-shadow(0 0 20px rgba(159, 134, 215, 0.3)) drop-shadow(0 0 40px rgba(209, 160, 226, 0.15));
+  transition: filter 0.6s ease;
+}
+.floating-logo:hover {
+  filter: brightness(1.5) drop-shadow(0 0 24px rgba(159, 134, 215, 0.5)) drop-shadow(0 0 50px rgba(209, 160, 226, 0.25));
+}
+.floating-logo:active {
+  cursor: grabbing;
+}
+
+/* trivia cards: imagen de fondo a la derecha con fade suave hacia la izquierda */
+.trivia-card { position: relative; overflow: hidden; }
+.trivia-bg {
+  position: absolute;
+  top: 0; right: 0;
+  width: 55%;
+  height: 100%;
+  object-fit: cover;
+  mask-image: linear-gradient(to left, rgba(0,0,0,0.45) 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.45) 0%, transparent 85%);
+  pointer-events: none;
+  border-radius: var(--radius);
+}
+.trivia-content {
+  position: relative;
+  z-index: 1;
+}
+.trivia-ended {
+  opacity: 0.7;
+  border-color: rgba(159, 134, 215, 0.1);
+}
+.trivia-ended h3 { color: var(--muted); }
+
+/* monthly digest blocks */
+.digest-body { max-width: 900px; margin: 0 auto; }
+.digest-split {
+  display: flex; gap: 20px; align-items: center;
+  margin: 16px 0; flex-wrap: wrap;
+}
+.digest-split-img {
+  width: 240px; height: 160px; border-radius: var(--radius);
+  object-fit: cover; flex-shrink: 0;
+}
+.digest-split-text { flex: 1; min-width: 200px; }
+.digest-split-text h3 { margin-bottom: 6px; }
+.digest-split-text p { font-size: 14px; line-height: 1.6; color: var(--muted); white-space: pre-wrap; }
+
+.digest-people {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 16px; margin: 16px 0;
+}
+.digest-person {
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+.digest-person:hover { transform: translateY(-2px); }
+.digest-person-frame {
+  width: 80px; height: 80px; margin: 0 auto 8px;
+  border-radius: var(--radius);
+  padding: 3px;
+  background: linear-gradient(135deg, var(--vibe), var(--vibe-2));
+  position: relative;
+}
+.digest-person-img {
+  width: 100%; height: 100%; border-radius: var(--radius-sm);
+  object-fit: cover; display: block;
+  background: var(--bg-2);
+}
+.digest-person-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-2); color: var(--muted);
+  font-size: 20px; font-weight: 700; letter-spacing: 1px;
+  width: 100%; height: 100%; border-radius: var(--radius-sm);
+}
+.digest-person-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.digest-person-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.digest-divider {
+  border: none; height: 1px; margin: 24px 0;
+  background: linear-gradient(90deg, transparent, var(--panel-brd), transparent);
+}
+
+/* digest block editor */
+.digest-editor-block {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px; margin-bottom: 8px;
+  background: var(--panel); border: 1px solid var(--panel-brd);
+  border-radius: var(--radius);
+  transition: box-shadow 0.2s ease;
+}
+.digest-editor-block:hover { box-shadow: 0 0 0 1px var(--vibe); }
+.digest-block-handle {
+  cursor: grab; padding: 6px 4px; color: var(--muted);
+  display: flex; align-items: center; flex-shrink: 0;
+  opacity: 0.5; transition: opacity 0.2s;
+}
+.digest-block-handle:hover { opacity: 1; }
+.digest-block-handle:active { cursor: grabbing; }
+.digest-block-body { flex: 1; min-width: 0; }
+.digest-block-body input, .digest-block-body textarea, .digest-block-body select {
+  width: 100%; margin-top: 4px;
+}
+.digest-block-del { flex-shrink: 0; opacity: 0.4; transition: opacity 0.2s; }
+.digest-block-del:hover { opacity: 1; color: var(--bad); }
+
+/* digest editor auto-save indicator */
+.digest-save-bar {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 10px; margin-bottom: 12px; padding: 6px 0;
+}
+.digest-save-status {
+  font-size: 11px; display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: var(--radius-sm);
+  transition: background 0.3s, color 0.3s;
+}
+.digest-save-status.saved { color: var(--good); background: rgba(111, 224, 168, 0.08); }
+.digest-save-status.saving { color: var(--warn); background: rgba(240, 198, 116, 0.08); }
+.digest-save-status.unsaved { color: var(--muted); background: rgba(159, 134, 215, 0.06); }
+
+/* digest: marcos variados para fotos de personas */
+.digest-frame-0 { background: linear-gradient(135deg, var(--vibe), var(--vibe-2)); }
+.digest-frame-1 { background: linear-gradient(135deg, #22d3ee, #818cf8); }
+.digest-frame-2 { background: linear-gradient(135deg, #fb7185, #c850c0); }
+.digest-frame-3 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+
+/* digest: confeti (cae y se difumina a la mitad) */
+.digest-confetti-wrap {
+  position: absolute; inset: 0; overflow: hidden;
+  pointer-events: none; z-index: 0; border-radius: var(--radius);
+}
+.digest-confetti {
+  position: absolute; top: -12px;
+  width: 7px; height: 10px; border-radius: 2px;
+  animation: digestConfettiFall linear infinite;
+}
+@keyframes digestConfettiFall {
+  0% { transform: translateY(-12px) rotate(0deg); opacity: 0.9; filter: blur(0); }
+  50% { opacity: 0.5; filter: blur(0.5px); }
+  100% { transform: translateY(200px) rotate(600deg); opacity: 0; filter: blur(2px); }
+}
+.digest-people-section { position: relative; }
+
+/* digest: amaversarios gold glow pulse */
+.digest-frame-gold {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  animation: digestGoldPulse 2.5s ease-in-out infinite;
+}
+@keyframes digestGoldPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.3), inset 0 0 2px rgba(251, 191, 36, 0.1); }
+  50% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.6), inset 0 0 4px rgba(251, 191, 36, 0.2); }
+}
+
+/* digest: cumple wave (conic-gradient rotation) */
+.digest-frame-wave {
+  position: relative; overflow: visible;
+}
+.digest-frame-wave::before {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, #9F86D7, #22d3ee, #fb7185, #fbbf24, #6fe0a8, #9F86D7);
+  animation: digestWaveRotate 3s linear infinite;
+  z-index: 0;
+}
+.digest-frame-wave > * { position: relative; z-index: 1; }
+@keyframes digestWaveRotate { to { rotate: 360deg; } }
+
+/* digest: cumple shimmer (light sweep across the frame border, not the face) */
+.digest-frame-shimmer {
+  position: relative; overflow: hidden;
+}
+.digest-frame-shimmer::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 35%,
+    rgba(255, 255, 255, 0.25) 45%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.25) 55%,
+    transparent 65%,
+    transparent 100%
+  );
+  background-size: 300% 100%;
+  animation: digestShimmerSweep 3s ease-in-out infinite;
+  border-radius: inherit; z-index: 2; pointer-events: none;
+}
+@keyframes digestShimmerSweep {
+  0% { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
+}
+
+/* digest: cumple pulse (multicolor glow) */
+.digest-frame-pulse {
+  animation: digestMultiPulse 3s ease-in-out infinite;
+}
+@keyframes digestMultiPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(159, 134, 215, 0.3); }
+  33% { box-shadow: 0 0 14px rgba(34, 211, 238, 0.4); }
+  66% { box-shadow: 0 0 14px rgba(251, 125, 133, 0.4); }
+}
+
+/* digest: heading variants */
+.digest-h { margin-top: 28px; margin-bottom: 8px; }
+.digest-h-default { font-size: 22px; font-weight: 700; color: var(--text); display: inline-block; }
+.digest-h-large { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; display: inline-block; }
+.digest-h-hero {
+  font-size: 34px; font-weight: 800; letter-spacing: -0.8px;
+  background: linear-gradient(135deg, var(--vibe), var(--vibe-2), #22d3ee);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  display: inline-block;
+}
+.digest-h-accent { font-size: 22px; font-weight: 700; color: var(--vibe); display: inline-block; }
+.digest-h-subtle {
+  font-size: 14px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 3px; display: inline-block;
+}
+/* barrita decorativa debajo del titulo (elemento separado, no ::after) */
+.digest-h-bar {
+  height: 3px; border-radius: 2px; margin-top: 8px;
+  background: linear-gradient(90deg, var(--vibe), var(--vibe-2));
+}
+.digest-h-bar.bar-default { width: 50px; }
+.digest-h-bar.bar-large { width: 70px; }
+
+.digest-block-preview.active { color: var(--vibe); opacity: 1; }
+
+/* force color inputs to show full color circle (kill browser chrome) */
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
+
+/* digest aurora animated backdrop */
+.digest-aurora-wrap {
+  border-radius: var(--radius-lg);
+  padding: 30px 24px;
+  margin: -28px -24px;
+  min-height: 100%;
+  position: relative;
+}
+.digest-aurora-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-size: 600% 600%;
+  background-image: inherit;
+  animation: digestAurora 12s ease infinite;
+  opacity: 0.6;
+  z-index: 0;
+}
+.digest-aurora-wrap > * { position: relative; z-index: 1; }
+@keyframes digestAurora {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ---------------------------------------------------------------------------
+   Digest block builder: rows -> columns (LEGO-style composition)
+   The feel: pieces lift on grab, columns reflow with a spring, drop seams glow
+   only while dragging, and a new row rail opens when you drag past the edges.
+   --------------------------------------------------------------------------- */
+.digest-editor-hint {
+  font-size: 12px; line-height: 1.5; margin: 0 0 14px;
+  padding: 8px 12px; border-radius: var(--radius);
+  background: rgba(159, 134, 215, 0.06); border: 1px solid var(--panel-brd);
+}
+
+/* a row: a horizontal band of columns */
+.digest-row {
+  display: flex; align-items: stretch; gap: 0;
+  padding: 2px; border-radius: var(--radius-lg);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.digest-row.dragging-active { background: rgba(159, 134, 215, 0.04); }
+
+/* a column: one block, a LEGO piece */
+.digest-col {
+  display: flex; flex-direction: column;
+  background: var(--panel); border: 1px solid var(--panel-brd);
+  border-radius: var(--radius); overflow: hidden;
+  transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
+}
+.digest-col:hover { border-color: var(--vibe); box-shadow: 0 0 0 1px var(--vibe-glow); }
+.digest-col.dragging { box-shadow: 0 0 0 1px var(--vibe); }
+
+.digest-col-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; padding: 4px 6px 4px 4px;
+  background: rgba(159, 134, 215, 0.06);
+  border-bottom: 1px solid var(--panel-brd);
+}
+.digest-col-handle {
+  cursor: grab; padding: 4px 6px; color: var(--muted);
+  display: flex; align-items: center; border-radius: var(--radius-sm);
+  opacity: 0.55; transition: opacity 0.2s ease, background 0.2s ease;
+  touch-action: none;
+}
+.digest-col-handle:hover { opacity: 1; background: rgba(159, 134, 215, 0.12); }
+.digest-col-handle:active { cursor: grabbing; }
+.digest-col-tools { display: flex; align-items: center; gap: 2px; }
+.digest-col-tool { padding: 3px 5px; opacity: 0.5; transition: opacity 0.2s ease, color 0.2s ease; }
+.digest-col-tool:hover:not(:disabled) { opacity: 1; }
+.digest-col-tool:disabled { opacity: 0.18; cursor: default; }
+.digest-col-tool.active { color: var(--vibe); opacity: 1; }
+.digest-col-del:hover:not(:disabled) { color: var(--bad); }
+.digest-col-span {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  min-width: 12px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.digest-col-body { padding: 10px; flex: 1; min-width: 0; }
+.digest-col-body input, .digest-col-body textarea, .digest-col-body select { width: 100%; margin-top: 4px; }
+
+/* seam between columns: a slim drop target that arms while dragging */
+.digest-col-gap {
+  flex: 0 0 8px; align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; transition: flex-basis 0.2s ease;
+}
+.digest-col-gap.armed { flex-basis: 14px; }
+.digest-col-gap.full { display: none; }
+.digest-col-gap-line {
+  width: 3px; height: 0%; border-radius: 3px;
+  background: var(--vibe); box-shadow: 0 0 8px var(--vibe-glow);
+  opacity: 0; transition: height 0.2s ease, opacity 0.2s ease;
+}
+.digest-col-gap.armed .digest-col-gap-line { height: 40%; opacity: 0.35; }
+.digest-col-gap.over .digest-col-gap-line { height: 88%; opacity: 1; }
+
+/* rail between rows: drop here to break a piece into a new full-width row */
+.digest-row-rail {
+  height: 8px; margin: 1px 0; position: relative;
+  display: flex; align-items: center; justify-content: center;
+  transition: height 0.2s ease;
+}
+.digest-row-rail.armed { height: 20px; }
+.digest-row-rail-line {
+  position: absolute; left: 8px; right: 8px; height: 2px; border-radius: 2px;
+  background: var(--vibe); box-shadow: 0 0 10px var(--vibe-glow);
+  opacity: 0; transform: scaleX(0.6); transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.digest-row-rail.armed .digest-row-rail-line { opacity: 0.3; transform: scaleX(1); }
+.digest-row-rail.over .digest-row-rail-line { opacity: 1; transform: scaleX(1); }
+.digest-row-rail-tip {
+  position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--vibe);
+  padding: 2px 8px; border-radius: var(--radius-sm);
+  background: var(--bg-2); border: 1px solid var(--vibe);
+  opacity: 0; transform: scale(0.85); transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.digest-row-rail.over .digest-row-rail-tip { opacity: 1; transform: scale(1); }
+
+/* inline "add column" affordance at the end of a row */
+.digest-add-slot { position: relative; display: flex; align-items: center; }
+.digest-add-slot.col { flex: 0 0 auto; margin-left: 4px; align-self: stretch; }
+.digest-add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; color: var(--muted);
+  background: transparent; border: 1px dashed var(--panel-brd);
+  border-radius: var(--radius); transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.digest-add-slot.col .digest-add-btn { width: 34px; align-self: stretch; }
+.digest-add-slot.row .digest-add-btn { padding: 8px 16px; font-size: 13px; font-weight: 600; }
+.digest-add-btn:hover:not(:disabled) { border-color: var(--vibe); color: var(--vibe); background: rgba(159, 134, 215, 0.06); }
+.digest-add-btn:disabled { opacity: 0.3; cursor: default; }
+.digest-add-row-bar { display: flex; justify-content: center; margin-top: 16px; }
+
+/* the block-type picker popover: fixed-position, placed by JS (portal to body)
+   so it flips/clamps to stay fully on screen and escapes ancestor overflow */
+.digest-picker-pop {
+  position: fixed; z-index: 60;
+  width: 260px; padding: 10px;
+  background: var(--bg-2); border: 1px solid var(--vibe);
+  border-radius: var(--radius-lg); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  transform-origin: top center;
+  animation: digestPickerIn 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.digest-picker-pop.up { transform-origin: bottom center; }
+@keyframes digestPickerIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.digest-picker-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 8px;
+}
+.digest-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.digest-picker-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 10px 4px; cursor: pointer; color: var(--text);
+  background: var(--panel); border: 1px solid var(--panel-brd);
+  border-radius: var(--radius); font-size: 11px;
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.15s ease, background 0.15s ease;
+}
+.digest-picker-chip:hover { border-color: var(--vibe); background: rgba(159, 134, 215, 0.1); transform: translateY(-2px); }
+.digest-picker-chip:active { transform: translateY(0); }
+.digest-picker-chip.active { border-color: var(--vibe); background: rgba(159, 134, 215, 0.16); box-shadow: inset 0 0 0 1px var(--vibe); }
+
+/* change-type control keeps the popover anchored to the block toolbar */
+.digest-col-change { position: relative; display: inline-flex; }
+
+/* clean preview surface (editor "vista previa") */
+.digest-preview-surface { padding: 6px 2px; }
+.digest-preview-surface .digest-pub-row {
+  display: flex; align-items: flex-start; gap: 24px; margin: 4px 0;
+}
+.digest-preview-surface .digest-pub-col { min-width: 0; }
+
+/* the piece in your hand: lifted, tilted, glowing */
+.digest-drag-overlay {
+  background: var(--bg-2); border: 1px solid var(--vibe);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--vibe-glow);
+  transform: rotate(-1.5deg) scale(1.02); cursor: grabbing;
+  width: 320px; max-width: 90vw;
+}
+.digest-overlay-type {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: var(--vibe);
+  padding: 2px 8px;
+}
+
+/* public view: a row of columns sitting side by side */
+.digest-pub-row {
+  display: flex; align-items: flex-start; gap: 24px;
+  margin: 4px 0;
+}
+.digest-pub-col { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .digest-col, .digest-col-gap, .digest-col-gap-line, .digest-row-rail,
+  .digest-row-rail-line, .digest-row-rail-tip, .digest-picker-chip, .digest-picker-pop {
+    transition: none; animation: none;
+  }
+  .digest-drag-overlay { transform: none; }
+}

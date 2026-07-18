@@ -2,18 +2,23 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { ROLE_ALLOWLIST, LINK_ICON_OPTIONS, CADENCES } from '../data/seed.js'
-import { ROLES } from '../lib/auth.jsx'
-import { useStore } from '../lib/store.jsx'
+import { ROLES, useAuth } from '../lib/auth.jsx'
+import { useStore, HOME_SECTIONS } from '../lib/store.jsx'
+import { generateDigestHTML, downloadDigestEML, EMAIL_THEMES } from '../lib/digestExport.js'
+import { AURORA_THEMES } from '../lib/auroraThemes.js'
 import Icon from '../components/Icon.jsx'
 import ImageEditor from '../components/ImageEditor.jsx'
+import ImagePositioner from '../components/ImagePositioner.jsx'
+import DigestEditor from '../components/DigestEditor.jsx'
+import AiAllyPromo from '../components/AiAllyPromo.jsx'
 
 // Admin back-office. Edits persist to localStorage via the store and show up
 // live on the public pages. In production each action becomes an API call.
-const TABS = ['Flyers', 'AI Ally', 'Noticias', 'Calendario', 'Sugerencias', 'Trivias', 'Cumpleanos', 'Accesos rapidos', 'Premios', 'Roles']
+const TABS = ['Inicio', 'Flyers', 'AI Ally', 'Noticias', 'Calendario', 'Sugerencias', 'Trivias', 'Digest', 'Cumpleanos', 'Accesos rapidos', 'Premios', 'Roles']
 
 export default function Admin() {
   const [params] = useSearchParams()
-  const initial = TABS.includes(params.get('tab')) ? params.get('tab') : 'Flyers'
+  const initial = TABS.includes(params.get('tab')) ? params.get('tab') : 'Inicio'
   const [tab, setTab] = useState(initial)
   const store = useStore()
 
@@ -29,19 +34,75 @@ export default function Admin() {
           <a key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)} style={{ cursor: 'pointer' }}>{t}</a>
         ))}
         <div className="spacer" />
-        <a onClick={store.reset} style={{ cursor: 'pointer' }} className="muted">Restaurar por defecto</a>
       </div>
 
+      {tab === 'Inicio' && <HomeSectionsAdmin />}
       {tab === 'Flyers' && <FlyersAdmin />}
       {tab === 'AI Ally' && <AiAllyAdmin />}
       {tab === 'Noticias' && <NewsAdmin />}
       {tab === 'Calendario' && <EventsAdmin />}
       {tab === 'Sugerencias' && <SuggestionsAdmin />}
       {tab === 'Trivias' && <TriviasAdmin />}
+      {tab === 'Digest' && <DigestAdmin />}
       {tab === 'Cumpleanos' && <PeopleAdmin />}
       {tab === 'Accesos rapidos' && <LinksAdmin />}
       {tab === 'Premios' && <AwardsAdmin />}
       {tab === 'Roles' && <RolesAdmin />}
+    </div>
+  )
+}
+
+/* --------------------------- Home sections (show/hide) --------------------------- */
+function HomeSectionsAdmin() {
+  const { homeSections, toggleHomeSection, news, trivias, links, events, aiEditions } = useStore()
+
+  // Small hint about how much content each section currently has, so admins can
+  // decide whether to hide an empty one.
+  const counts = {
+    flyers: null,
+    news: news.length,
+    live: events.length,
+    deadlines: events.filter((e) => e.deadline).length,
+    trivias: trivias.length,
+    links: links.length,
+    aiAlly: (aiEditions || []).length,
+  }
+
+  return (
+    <div>
+      <div className="notice" style={{ marginBottom: 16 }}>
+        Prende o apaga secciones del Inicio. Apagar una seccion solo la oculta del Home;
+        el contenido sigue existiendo en su propia pestana (ej. Trivias, Calendario). Util
+        para cuando un mes no hay trivias o noticias.
+      </div>
+
+      <div className="card">
+        {HOME_SECTIONS.map((s) => {
+          const on = homeSections?.[s.key] !== false
+          const count = counts[s.key]
+          return (
+            <div key={s.key} className="home-toggle-row">
+              <div style={{ flex: 1 }}>
+                <strong>{s.label}</strong>
+                {count === 0 && <span className="pill" style={{ marginLeft: 8 }}>vacia</span>}
+                {typeof count === 'number' && count > 0 && (
+                  <span className="muted" style={{ marginLeft: 8, fontSize: 12 }}>{count} elemento{count === 1 ? '' : 's'}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className={`switch ${on ? 'on' : ''}`}
+                role="switch"
+                aria-checked={on}
+                aria-label={`${on ? 'Apagar' : 'Prender'} ${s.label}`}
+                onClick={() => toggleHomeSection(s.key)}
+              >
+                <span className="switch-knob" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -400,14 +461,32 @@ function AiAllyAdmin() {
     setLabel(''); setBusy('')
   }
 
+  // Upload / replace the standalone IDEA FLYER for an edition (separate from the
+  // magazine pages). Single image that presents the colleague's idea.
+  const setFlyer = async (id, file) => {
+    if (!file) return
+    const flyer = await readFile(file)
+    update('aiEditions', id, { flyer })
+  }
+
   const makeCurrent = (id) => setCurrentEdition(id)
 
+  const previewEd = editions.find((e) => e.current) || editions[0]
+
   return (
-    <div className="grid cols-2">
+    <div>
+      {previewEd && (
+        <>
+          <div className="section-title"><Icon name="idea" size={14} /><span>Vista previa (como se ve en Inicio)</span></div>
+          <div style={{ marginBottom: 20 }}><AiAllyPromo edition={previewEd} /></div>
+        </>
+      )}
+      <div className="grid cols-2">
       <div className="card">
-        <h3>Nueva edicion mensual</h3>
+        <h3>Nueva edicion mensual (la revista)</h3>
         <div className="notice" style={{ fontSize: 12, margin: '4px 0 12px' }}>
-          Sube un PDF con todas las paginas (recomendado) o varias imagenes 800x1131.
+          Sube la REVISTA del mes: un PDF con todas las paginas (recomendado) o varias
+          imagenes 800x1131. El flyer de la idea se sube por separado en cada edicion.
           Las ediciones anteriores se conservan y el lector puede navegarlas.
         </div>
         <label>Etiqueta del mes</label>
@@ -428,18 +507,36 @@ function AiAllyAdmin() {
         {editions.map((ed) => (
           <div key={ed.id} className="card" style={{ marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="tag" style={{ margin: 0 }}><Icon name="idea" size={12} /> {ed.kind === 'pdf' ? 'PDF' : `${ed.pages?.length || 0} img`}</span>
+              <span className="tag" style={{ margin: 0 }}><Icon name="idea" size={12} /> Revista: {ed.kind === 'pdf' ? 'PDF' : `${ed.pages?.length || 0} img`}</span>
               <strong style={{ flex: 1 }}>{ed.label}</strong>
               {ed.current && <span className="home-badge">ACTUAL</span>}
             </div>
             <label>Etiqueta</label>
             <input value={ed.label} onChange={(e) => update('aiEditions', ed.id, { label: e.target.value })} />
+            <label>Descripcion (de que trata la idea)</label>
+            <textarea value={ed.description || ''} onChange={(e) => update('aiEditions', ed.id, { description: e.target.value })} />
+            <label>Autor de la idea (login)</label>
+            <input value={ed.ideaAuthor || ''} onChange={(e) => update('aiEditions', ed.id, { ideaAuthor: e.target.value })} placeholder="ej. davisanc" />
+            <label>Link en AIRO store</label>
+            <input value={ed.airoUrl || ''} onChange={(e) => update('aiEditions', ed.id, { airoUrl: e.target.value })} placeholder="https://airo.amazon.dev/..." />
+
+            {/* Standalone idea flyer (separate from the magazine pages above) */}
+            <label>Flyer de la idea (imagen standalone, se muestra en Inicio)</label>
+            <div className="ally-flyer-edit">
+              <div className="ally-flyer-thumb">
+                {ed.flyer
+                  ? <img src={ed.flyer} alt={`Flyer ${ed.label}`} />
+                  : <div className="ally-flyer-thumb-empty"><Icon name="image" size={20} /></div>}
+              </div>
+              <input type="file" accept="image/*" onChange={(e) => e.target.files[0] && setFlyer(ed.id, e.target.files[0])} />
+            </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
               {!ed.current && <button className="btn ghost sm" onClick={() => makeCurrent(ed.id)}><Icon name="star" size={14} /> Marcar como actual</button>}
               <button className="btn ghost sm" onClick={() => remove('aiEditions', ed.id)}><Icon name="trash" size={14} /> Eliminar</button>
             </div>
           </div>
         ))}
+      </div>
       </div>
     </div>
   )
@@ -450,19 +547,25 @@ const AWARD_ICONS = ['award', 'trophy', 'star', 'sparkles', 'idea', 'users']
 
 function AwardsAdmin() {
   const { awards, add, update, remove, addAward, toggleAwardActive } = useStore()
+  const { isRewardsManager } = useAuth()
   const navigate = useNavigate()
   const [listRef] = useAutoAnimate()
   const [editing, setEditing] = useState(null) // award id being edited, or 'new'
 
-  const blank = { name: '', cadence: 'Monthly', icon: 'award', description: '', why: '', eligibility: '', example: '', active: true }
+  const blank = { name: '', cadence: 'Monthly', icon: 'award', description: '', why: '', eligibility: '', example: '', amount: '', active: true }
   const [draft, setDraft] = useState(blank)
 
   const startNew = () => { setDraft(blank); setEditing('new') }
-  const startEdit = (a) => { setDraft(a); setEditing(a.id) }
+  const startEdit = (a) => { setDraft({ ...a, amount: a.amount ?? '' }) ; setEditing(a.id) }
   const save = () => {
     if (!draft.name) return
-    if (editing === 'new') addAward(draft)
-    else update('awards', editing, draft)
+    // Normalize amount to a number, or drop it if left blank / invalid.
+    const clean = { ...draft }
+    const n = parseFloat(draft.amount)
+    if (Number.isFinite(n) && n >= 0) clean.amount = n
+    else delete clean.amount
+    if (editing === 'new') addAward(clean)
+    else update('awards', editing, clean)
     setEditing(null); setDraft(blank)
   }
 
@@ -492,6 +595,9 @@ function AwardsAdmin() {
                     <span className="guide-ico" style={{ width: 32, height: 32 }}><Icon name={a.icon} size={16} /></span>
                     <div style={{ flex: 1 }}>
                       <strong>{a.name}</strong>
+                      {isRewardsManager && typeof a.amount === 'number' && (
+                        <span className="reward-amount sm" style={{ marginLeft: 8 }}>${a.amount}</span>
+                      )}
                       {!a.active && <span className="pill" style={{ marginLeft: 8 }}>Archivado</span>}
                       <div className="muted" style={{ fontSize: 12 }}>{a.description}</div>
                     </div>
@@ -532,6 +638,13 @@ function AwardsAdmin() {
             <input value={draft.eligibility} onChange={(e) => setDraft({ ...draft, eligibility: e.target.value })} />
             <label>Ejemplo de nominacion (opcional)</label>
             <textarea value={draft.example} onChange={(e) => setDraft({ ...draft, example: e.target.value })} />
+            {isRewardsManager && (
+              <>
+                <label>Monto de la gift card en USD (solo equipo R&R)</label>
+                <input type="number" min="0" step="5" value={draft.amount}
+                  onChange={(e) => setDraft({ ...draft, amount: e.target.value })} placeholder="ej. 100" />
+              </>
+            )}
             <div className="modal-actions">
               <button className="btn ghost" onClick={() => setEditing(null)}>Cancelar</button>
               <button className="btn" disabled={!draft.name} onClick={save}>Guardar</button>
@@ -609,64 +722,119 @@ function SuggestionsAdmin() {
 function TriviasAdmin() {
   const { trivias, add, update, remove } = useStore()
   const [listRef] = useAutoAnimate()
-  const blank = { title: '', description: '', url: '', opensAt: '2026-07-20', closesAt: '2026-07-27' }
+  const blank = { title: '', description: '', url: '', opensAt: '2026-07-20', closesAt: '2026-07-27', image: '', imagePos: '50% 50%' }
   const [form, setForm] = useState(blank)
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  const [error, setError] = useState('')
+  const [editing, setEditing] = useState(null)
+  const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setError('') }
 
   const addTrivia = () => {
-    if (!form.title || !form.url) return
+    if (!form.title) { setError('Falta el titulo'); return }
+    if (!form.url) { setError('Falta el link al Form'); return }
     add('trivias', { ...form })
     setForm(blank)
+    setError('')
   }
 
   return (
-    <div className="grid cols-2">
-      <div className="card">
-        <h3>Nueva trivia</h3>
-        <div className="notice" style={{ fontSize: 12, margin: '4px 0 12px' }}>
-          Las trivias enlazan a un Microsoft Form. No se califican dentro de VIBEverse.
-        </div>
-        <label>Titulo</label>
-        <input value={form.title} onChange={(e) => set('title', e.target.value)} />
-        <label>Descripcion</label>
-        <textarea value={form.description} onChange={(e) => set('description', e.target.value)} />
-        <label>Link al Form</label>
-        <input value={form.url} onChange={(e) => set('url', e.target.value)} placeholder="https://forms.office.com/r/..." />
-        <label>Abre</label>
-        <input type="date" value={form.opensAt} onChange={(e) => set('opensAt', e.target.value)} />
-        <label>Cierra</label>
-        <input type="date" value={form.closesAt} onChange={(e) => set('closesAt', e.target.value)} />
-        <button className="btn" style={{ marginTop: 14 }} onClick={addTrivia}><Icon name="plus" size={16} /> Publicar trivia</button>
-      </div>
-
-      <div ref={listRef}>
-        {trivias.length === 0 && <div className="empty">No hay trivias. Crea la primera.</div>}
-        {trivias.map((t) => (
-          <div key={t.id} className="card" style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span className="tag" style={{ margin: 0 }}><Icon name="brain" size={12} /> Trivia</span>
-              <strong style={{ flex: 1 }}>{t.title}</strong>
-              <button className="btn ghost sm" onClick={() => remove('trivias', t.id)}><Icon name="trash" size={14} /></button>
-            </div>
+    <div>
+      {/* formulario compacto arriba */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginBottom: 8 }}>Nueva trivia</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+          <div>
             <label>Titulo</label>
-            <input value={t.title} onChange={(e) => update('trivias', t.id, { title: e.target.value })} />
-            <label>Descripcion</label>
-            <textarea value={t.description} onChange={(e) => update('trivias', t.id, { description: e.target.value })} />
+            <input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Nombre de la trivia" />
+          </div>
+          <div>
             <label>Link al Form</label>
-            <input value={t.url} onChange={(e) => update('trivias', t.id, { url: e.target.value })} />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div style={{ flex: 1 }}>
-                <label>Abre</label>
-                <input type="date" value={t.opensAt} onChange={(e) => update('trivias', t.id, { opensAt: e.target.value })} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label>Cierra</label>
-                <input type="date" value={t.closesAt} onChange={(e) => update('trivias', t.id, { closesAt: e.target.value })} />
-              </div>
+            <input value={form.url} onChange={(e) => set('url', e.target.value)} placeholder="https://forms.office.com/r/..." />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label>Descripcion</label>
+            <input value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="Breve descripcion" />
+          </div>
+          <div>
+            <label>Imagen (URL, opcional)</label>
+            <input value={form.image} onChange={(e) => set('image', e.target.value)} placeholder="https://i.imgur.com/..." />
+          </div>
+          {form.image && (
+            <div>
+              <label>Encuadre (arrastra)</label>
+              <ImagePositioner
+                src={form.image}
+                value={form.imagePos || '50% 50%'}
+                onChange={(pos) => set('imagePos', pos)}
+                height={70}
+              />
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div style={{ flex: 1 }}>
+              <label>Abre</label>
+              <input type="date" value={form.opensAt} onChange={(e) => set('opensAt', e.target.value)} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Cierra</label>
+              <input type="date" value={form.closesAt} onChange={(e) => set('closesAt', e.target.value)} />
             </div>
           </div>
-        ))}
+        </div>
+        <button className="btn" style={{ marginTop: 14 }} onClick={addTrivia}>
+          <Icon name="plus" size={16} /> Publicar trivia
+        </button>
+        {error && <p style={{ color: 'var(--bad)', fontSize: 12, marginTop: 6 }}>{error}</p>}
       </div>
+
+      {/* grid cuadriculado de trivias existentes */}
+      {trivias.length === 0 ? (
+        <div className="empty">No hay trivias. Crea la primera.</div>
+      ) : (
+        <div className="grid cols-2" ref={listRef}>
+          {trivias.map((t) => (
+            <div key={t.id} className="card" style={{ fontSize: 13 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <span className="tag" style={{ margin: 0, fontSize: 11 }}><Icon name="brain" size={11} /> Trivia</span>
+                <span style={{ flex: 1, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                <button className="btn ghost sm" onClick={() => remove('trivias', t.id)} title="Eliminar"><Icon name="trash" size={13} /></button>
+              </div>
+              <p className="muted" style={{ fontSize: 11, marginBottom: 6 }}>{t.opensAt} al {t.closesAt}</p>
+              {t.image && <img src={t.image} alt="" style={{ width: '100%', height: 50, objectFit: 'cover', borderRadius: 'var(--radius-sm)', marginBottom: 6, opacity: 0.7 }} />}
+              <button className="btn ghost sm" style={{ width: '100%' }} onClick={() => setEditing(editing === t.id ? null : t.id)}>
+                <Icon name="settings" size={13} /> {editing === t.id ? 'Cerrar' : 'Editar'}
+              </button>
+              {editing === t.id && (
+                <div style={{ marginTop: 10 }}>
+                  <label>Titulo</label>
+                  <input value={t.title} onChange={(e) => update('trivias', t.id, { title: e.target.value })} />
+                  <label>Descripcion</label>
+                  <input value={t.description} onChange={(e) => update('trivias', t.id, { description: e.target.value })} />
+                  <label>Link</label>
+                  <input value={t.url} onChange={(e) => update('trivias', t.id, { url: e.target.value })} />
+                  <label>Imagen (URL)</label>
+                  <input value={t.image || ''} onChange={(e) => update('trivias', t.id, { image: e.target.value })} />
+                  {t.image && (
+                    <div style={{ marginTop: 6 }}>
+                      <label>Encuadre (arrastra)</label>
+                      <ImagePositioner
+                        src={t.image}
+                        value={t.imagePos || '50% 50%'}
+                        onChange={(pos) => update('trivias', t.id, { imagePos: pos })}
+                      />
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    <div style={{ flex: 1 }}><label>Abre</label><input type="date" value={t.opensAt} onChange={(e) => update('trivias', t.id, { opensAt: e.target.value })} /></div>
+                    <div style={{ flex: 1 }}><label>Cierra</label><input type="date" value={t.closesAt} onChange={(e) => update('trivias', t.id, { closesAt: e.target.value })} /></div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* editor modal expandido (cuando se clickea Editar) */}
     </div>
   )
 }
@@ -791,6 +959,195 @@ function RolesAdmin() {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+/* --------------------------- Digest (Monthly Newsletter) --------------------------- */
+function DigestAdmin() {
+  const { digests, addDigest, updateDigest, removeDigest, publishDigest, unpublishDigest, setDigestSections } = useStore()
+  const [creating, setCreating] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [form, setForm] = useState({ title: 'VIBE Monthly Digest', subtitle: '', coverMonth: '', celebrationMonth: '' })
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+
+  const sorted = [...(digests || [])].sort((a, b) => b.id.localeCompare(a.id))
+  const editingDigest = editingId ? sorted.find((d) => d.id === editingId) : null
+
+  const create = () => {
+    if (!form.subtitle) return
+    addDigest({ ...form, sections: [{ id: 'sec_' + Date.now(), type: 'heading', text: 'Resumen de ' + form.coverMonth }] })
+    setForm({ title: 'VIBE Monthly Digest', subtitle: '', coverMonth: '', celebrationMonth: '' })
+    setCreating(false)
+  }
+
+  const [showPreview, setShowPreview] = useState(false)
+
+  const openInOutlook = () => {
+    downloadDigestEML(editingDigest)
+  }
+
+  // si hay un digest seleccionado para editar, mostrar el editor
+  if (editingDigest) {
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <button className="btn ghost sm" onClick={() => setEditingId(null)}>
+            <Icon name="prev" size={14} /> Volver
+          </button>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: 0 }}>{editingDigest.title}</h3>
+            <p className="muted" style={{ fontSize: 12, margin: 0 }}>{editingDigest.subtitle}</p>
+          </div>
+          <span className={`pill ${editingDigest.status === 'published' ? 'badge-good' : 'badge-warn'}`}>
+            {editingDigest.status === 'published' ? 'Publicado' : 'Borrador'}
+          </span>
+        </div>
+
+        {/* metadata editable */}
+        <div className="card" style={{ marginBottom: 16, padding: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 11 }}>Subtitulo</label>
+              <input value={editingDigest.subtitle || ''} onChange={(e) => updateDigest(editingId, { subtitle: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11 }}>Mes cobertura</label>
+              <input value={editingDigest.coverMonth || ''} onChange={(e) => updateDigest(editingId, { coverMonth: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11 }}>Mes celebraciones</label>
+              <input value={editingDigest.celebrationMonth || ''} onChange={(e) => updateDigest(editingId, { celebrationMonth: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11 }}>Theme email (.eml)</label>
+              <select value={editingDigest.emailTheme || 'default'} onChange={(e) => updateDigest(editingId, { emailTheme: e.target.value })}>
+                {Object.entries(EMAIL_THEMES).map(([key, t]) => (
+                  <option key={key} value={key}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* action bar: preview + export */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <button className="btn sm" onClick={() => setShowPreview(!showPreview)}>
+            <Icon name="external" size={13} /> {showPreview ? 'Cerrar preview' : 'Preview email'}
+          </button>
+          <button className="btn sm" onClick={openInOutlook}>
+            <Icon name="external" size={13} /> Abrir en Outlook (.eml)
+          </button>
+        </div>
+
+        {/* preview del email */}
+        {showPreview && (
+          <div style={{ marginBottom: 20, padding: 20, background: '#1a1128', borderRadius: 'var(--radius)', border: '1px solid var(--panel-brd)', overflowX: 'auto' }}>
+            <div className="muted" style={{ fontSize: 11, marginBottom: 10 }}>Preview (600px, como se ve en email):</div>
+            <div style={{ maxWidth: 620, margin: '0 auto' }} dangerouslySetInnerHTML={{ __html: generateDigestHTML(editingDigest) }} />
+          </div>
+        )}
+
+        {/* editor de bloques */}
+        <DigestEditor
+          digest={editingDigest}
+          onSave={(sections) => setDigestSections(editingId, sections)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div>
+          <h3 style={{ margin: 0 }}>Monthly Digest</h3>
+          <p className="muted" style={{ fontSize: 12 }}>Crea, edita y publica los digests mensuales.</p>
+        </div>
+        <button className="btn" onClick={() => setCreating(!creating)}>
+          <Icon name="plus" size={16} /> Nuevo digest
+        </button>
+      </div>
+
+      {creating && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <h3>Crear nuevo digest</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+            <div>
+              <label>Subtitulo (mes que cubre)</label>
+              <input value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} placeholder="ej. Junio 2026" />
+            </div>
+            <div>
+              <label>Mes de cobertura (actividades)</label>
+              <input value={form.coverMonth} onChange={(e) => set('coverMonth', e.target.value)} placeholder="ej. June 2026" />
+            </div>
+            <div>
+              <label>Mes de celebraciones (cumpleanos)</label>
+              <input value={form.celebrationMonth} onChange={(e) => set('celebrationMonth', e.target.value)} placeholder="ej. July 2026" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            <button className="btn" onClick={create}><Icon name="plus" size={15} /> Crear</button>
+            <button className="btn ghost" onClick={() => setCreating(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {sorted.length === 0 ? (
+        <div className="empty">No hay digests. Crea el primero.</div>
+      ) : (
+        <div className="grid cols-2">
+          {sorted.map((d) => (
+            <div key={d.id} className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>{d.title}</h3>
+                  <p className="muted" style={{ fontSize: 13 }}>{d.subtitle}</p>
+                </div>
+                <span className={`pill ${d.status === 'published' ? 'badge-good' : 'badge-warn'}`}>
+                  {d.status === 'published' ? 'Publicado' : 'Borrador'}
+                </span>
+              </div>
+
+              <div className="muted" style={{ fontSize: 12, margin: '8px 0' }}>
+                Cobertura: {d.coverMonth || '-'} | Celebraciones: {d.celebrationMonth || '-'}
+              </div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                {d.sections?.length || 0} bloque{(d.sections?.length || 0) === 1 ? '' : 's'}
+                {d.publishedAt && ` | Publicado: ${d.publishedAt}`}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: 10 }}>Aurora (web)</label>
+                  <select value={d.auroraTheme || 'default'} onChange={(e) => updateDigest(d.id, { auroraTheme: e.target.value })} style={{ fontSize: 11, width: '100%' }}>
+                    {Object.entries(AURORA_THEMES).map(([key, t]) => <option key={key} value={key}>{t.label}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <button className="btn sm" onClick={() => setEditingId(d.id)}>
+                  <Icon name="settings" size={13} /> Editar
+                </button>
+                {d.status === 'draft' && (
+                  <button className="btn sm" onClick={() => publishDigest(d.id)}>
+                    <Icon name="external" size={13} /> Publicar
+                  </button>
+                )}
+                {d.status === 'published' && (
+                  <button className="btn ghost sm" onClick={() => unpublishDigest(d.id)}>
+                    Despublicar
+                  </button>
+                )}
+                <button className="btn ghost sm" style={{ color: 'var(--bad)' }} onClick={() => removeDigest(d.id)}>
+                  <Icon name="trash" size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

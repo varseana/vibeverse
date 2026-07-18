@@ -6,6 +6,7 @@ import { fmtDate, fmtShort } from '../lib/format.js'
 import { eventState, deadlineState } from '../lib/eventState.js'
 import FlyerCarousel from '../components/FlyerCarousel.jsx'
 import EventBanner from '../components/EventBanner.jsx'
+import AiAllyPromo from '../components/AiAllyPromo.jsx'
 import Icon from '../components/Icon.jsx'
 
 function SectionTitle({ icon, children }) {
@@ -19,7 +20,12 @@ function SectionTitle({ icon, children }) {
 
 export default function Home() {
   const { isManager } = useAuth()
-  const { news, links, events, trivias } = useStore()
+  const { news, links, events, trivias, aiEditions, homeSections } = useStore()
+  // Section visibility toggles (Admin > Inicio). Default to on if unset.
+  const show = (key) => homeSections?.[key] !== false
+  // Current AI is your ally edition for the Home promo block.
+  const currentEdition = (aiEditions || []).find((e) => e.current) ||
+    [...(aiEditions || [])].sort((a, b) => b.id.localeCompare(a.id))[0]
   const [newsRef] = useAutoAnimate()
   const [linksRef] = useAutoAnimate()
   const pinned = news.find((n) => n.pinned) || news[0]
@@ -36,10 +42,10 @@ export default function Home() {
   return (
     <div>
       {/* Flyer carousel with the home-featured image centered */}
-      <FlyerCarousel />
+      {show('flyers') && <FlyerCarousel />}
 
       {/* Latest pinned news */}
-      {pinned && (
+      {show('news') && pinned && (
         <div className="hero">
           <span className="tag">{pinned.tag}</span>
           <h1><span>{pinned.title}</span></h1>
@@ -49,7 +55,7 @@ export default function Home() {
       )}
 
       {/* Live now */}
-      {live.length > 0 && (
+      {show('live') && live.length > 0 && (
         <>
           <SectionTitle icon="live">En vivo ahora</SectionTitle>
           <div className="grid cols-2">
@@ -59,7 +65,7 @@ export default function Home() {
       )}
 
       {/* Deadlines approaching */}
-      {closingSoon.length > 0 && (
+      {show('deadlines') && closingSoon.length > 0 && (
         <>
           <SectionTitle icon="clock">Cierran pronto</SectionTitle>
           <div className="grid cols-3">
@@ -78,42 +84,53 @@ export default function Home() {
       )}
 
       {/* Active trivias */}
-      <SectionTitle icon="brain">Trivias activas</SectionTitle>
-      <div className="grid cols-3">
-        {trivias.map((t) => (
-          <a key={t.id} className="card hover" href={t.url} target="_blank" rel="noreferrer">
-            <span className="tag"><Icon name="brain" size={12} /> Trivia</span>
-            <h3>{t.title}</h3>
-            <p>{t.description}</p>
-            <p className="muted" style={{ marginTop: 10, fontSize: 12 }}>
-              Cierra el {fmtShort(t.closesAt)}, abrir en Forms
-            </p>
-          </a>
-        ))}
-      </div>
+      {show('trivias') && trivias.length > 0 && (
+        <>
+          <SectionTitle icon="brain">Trivias activas</SectionTitle>
+          <div className="grid cols-2">
+            {trivias.map((t) => (
+              <a key={t.id} className="card hover trivia-card" href={t.url} target="_blank" rel="noreferrer" style={{ position: 'relative', overflow: 'hidden' }}>
+                {t.image && <img className="trivia-bg" src={t.image} alt="" style={{ objectPosition: t.imagePos || '50% 50%' }} />}
+                <div className="trivia-content">
+                  <span className="tag"><Icon name="brain" size={12} /> Trivia</span>
+                  <h3>{t.title}</h3>
+                  <p>{t.description}</p>
+                  <p className="muted" style={{ marginTop: 10, fontSize: 12 }}>
+                    Cierra el {fmtShort(t.closesAt)}, abrir en Forms
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Quick links */}
-      <SectionTitle icon="sparkles">Accesos rapidos</SectionTitle>
-      <div className="grid cols-4" ref={linksRef}>
-        {shownLinks.map((l) => {
-          const internal = l.url.startsWith('#')
-          const inner = (
-            <>
-              <div className="ql-icon"><Icon name={l.icon} size={22} /></div>
-              <h3 style={{ fontSize: 15 }}>{l.label}</h3>
-              <p className="muted" style={{ fontSize: 12 }}>{l.category}</p>
-            </>
-          )
-          return internal ? (
-            <Link key={l.id} className="card hover ql-card" to={l.url.slice(1)}>{inner}</Link>
-          ) : (
-            <a key={l.id} className="card hover ql-card" href={l.url} target="_blank" rel="noreferrer">{inner}</a>
-          )
-        })}
-      </div>
+      {show('links') && shownLinks.length > 0 && (
+        <>
+          <SectionTitle icon="sparkles">Accesos rapidos</SectionTitle>
+          <div className="grid cols-4" ref={linksRef}>
+            {shownLinks.map((l) => {
+              const internal = l.url.startsWith('#')
+              const inner = (
+                <>
+                  <div className="ql-icon"><Icon name={l.icon} size={22} /></div>
+                  <h3 style={{ fontSize: 15 }}>{l.label}</h3>
+                  <p className="muted" style={{ fontSize: 12 }}>{l.category}</p>
+                </>
+              )
+              return internal ? (
+                <Link key={l.id} className="card hover ql-card" to={l.url.slice(1)}>{inner}</Link>
+              ) : (
+                <a key={l.id} className="card hover ql-card" href={l.url} target="_blank" rel="noreferrer">{inner}</a>
+              )
+            })}
+          </div>
+        </>
+      )}
 
       {/* More news */}
-      {rest.length > 0 && (
+      {show('news') && rest.length > 0 && (
         <>
           <SectionTitle icon="news">Mas noticias</SectionTitle>
           <div className="grid cols-2" ref={newsRef}>
@@ -129,16 +146,13 @@ export default function Home() {
         </>
       )}
 
-      {/* AI is your ally now lives in its own tab (/ai-ally). Surface a link. */}
-      <SectionTitle icon="idea">AI is your ally</SectionTitle>
-      <Link to="/ai-ally" className="card hover" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        <span className="ql-icon" style={{ margin: 0 }}><Icon name="idea" size={22} /></span>
-        <span style={{ flex: 1 }}>
-          <h3 style={{ marginBottom: 2 }}>Revista AI is your ally</h3>
-          <p className="muted" style={{ fontSize: 13 }}>Ideas de IA de SEPO en formato revista. Abrir para leer.</p>
-        </span>
-        <Icon name="next" size={20} />
-      </Link>
+      {/* AI is your ally: promo block (flyer + description + AIRO/magazine buttons) */}
+      {show('aiAlly') && currentEdition && (
+        <>
+          <SectionTitle icon="idea">AI is your ally</SectionTitle>
+          <AiAllyPromo edition={currentEdition} />
+        </>
+      )}
     </div>
   )
 }

@@ -6,19 +6,22 @@ import { useAuth, DEMO_USERS, ROLES } from './lib/auth.jsx'
 import Icon from './components/Icon.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import GalaxyBackground from './components/GalaxyBackground.jsx'
+import FloatingLogo from './components/FloatingLogo.jsx'
 import logo from './assets/vibe-logo.png'
 
 import Home from './pages/Home.jsx'
 import Calendar from './pages/Calendar.jsx'
 import Trivias from './pages/Trivias.jsx'
 import ManagerHub from './pages/ManagerHub.jsx'
-import Admin from './pages/Admin.jsx'
 import People from './pages/People.jsx'
 import MonthlyDigest from './pages/MonthlyDigest.jsx'
 
 // Code-split: the magazine (pdf.js + flip engine) only loads when a user opens
 // this tab, so it never weighs down the rest of the app.
 const AiAlly = lazy(() => import('./pages/AiAlly.jsx'))
+// Admin carries the heaviest editor (block builder + dnd-kit). Only admins ever
+// open it, so lazy-load it to keep the main bundle light for everyone else.
+const Admin = lazy(() => import('./pages/Admin.jsx'))
 
 // Route guard: show a friendly notice if the user's rank is below the required.
 function Guard({ min, children }) {
@@ -74,6 +77,7 @@ export default function App() {
   return (
     <div className="app">
       <GalaxyBackground />
+      <FloatingLogo />
       <header className="topbar">
         <div className="brand">
           <img src={logo} alt="VIBE" />
@@ -102,11 +106,11 @@ export default function App() {
             <Route path="/" element={<PageTransition><Home /></PageTransition>} />
             <Route path="/calendar" element={<PageTransition><Calendar /></PageTransition>} />
             <Route path="/trivias" element={<PageTransition><Trivias /></PageTransition>} />
-            <Route path="/ai-ally" element={<PageTransition><Suspense fallback={<div className="empty">Cargando revista...</div>}><AiAlly /></Suspense></PageTransition>} />
+            <Route path="/ai-ally" element={<PageTransition><Suspense fallback={<div className="mag-cover"><div className="mag-cover-inner"><div className="skeleton skeleton-fill" /></div></div>}><AiAlly /></Suspense></PageTransition>} />
             <Route path="/monthly-digest" element={<PageTransition><MonthlyDigest /></PageTransition>} />
             <Route path="/manager-hub" element={<PageTransition><Guard min="manager"><ManagerHub /></Guard></PageTransition>} />
             <Route path="/people" element={<PageTransition><Guard min="manager"><People /></Guard></PageTransition>} />
-            <Route path="/admin" element={<PageTransition><Guard min="admin"><Admin /></Guard></PageTransition>} />
+            <Route path="/admin" element={<PageTransition><Guard min="admin"><Suspense fallback={<div className="empty">Cargando editor...</div>}><Admin /></Suspense></Guard></PageTransition>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>

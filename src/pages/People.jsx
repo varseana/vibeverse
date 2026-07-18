@@ -10,11 +10,11 @@ export default function People() {
   return (
     <div>
       <div className="page-head">
-        <h1>Cumpleanos y Amaversarios</h1>
+        <h1>Cumple Años y Amaversarios</h1>
         <p>Celebra a tu equipo este mes. Visible para managers.</p>
       </div>
 
-      <div className="section-title"><Icon name="cake" size={15} /><span>Cumpleanos de Julio</span></div>
+      <div className="section-title"><Icon name="cake" size={15} /><span>Cumple Años de Julio</span></div>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table>
           <thead><tr><th>Login</th><th>Dia</th><th>Mes</th><th>Manager</th></tr></thead>

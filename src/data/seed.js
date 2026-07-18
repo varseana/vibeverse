@@ -22,6 +22,24 @@ export function svgFlyer(title, c1, c2) {
   return 'data:image/svg+xml,' + encodeURIComponent(svg)
 }
 
+// Standalone "idea flyer" placeholder: the single image that presents one
+// colleague's AI idea. This is SEPARATE from the magazine (which is the PDF /
+// multi-page read). Shown on Home next to the AIRO link.
+export function svgIdeaFlyer(idea, author, c1, c2) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='900' height='1100'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/>
+    </linearGradient></defs>
+    <rect width='900' height='1100' fill='url(#g)'/>
+    <rect x='44' y='44' width='812' height='1012' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='2'/>
+    <text x='72' y='140' font-family='Rubik,Arial,sans-serif' font-size='26' letter-spacing='3' fill='rgba(255,255,255,0.7)'>LA IDEA DEL MES</text>
+    <text x='72' y='540' font-family='Rubik,Arial,sans-serif' font-size='56' font-weight='800' fill='#ffffff'>${idea}</text>
+    <text x='72' y='610' font-family='Inter,Arial,sans-serif' font-size='28' fill='rgba(255,255,255,0.88)'>Idea de ${author}</text>
+    <text x='72' y='1040' font-family='Inter,Arial,sans-serif' font-size='20' fill='rgba(255,255,255,0.6)'>SEPO x VIBE, AI is your ally</text>
+  </svg>`
+  return 'data:image/svg+xml,' + encodeURIComponent(svg)
+}
+
 // Portrait flyer (800x1131) placeholder for the "AI is your ally" magazine.
 // Real pages are uploaded by the admin; these keep the demo self-contained.
 export function svgPage(title, subtitle, c1, c2) {
@@ -60,17 +78,29 @@ export const FLYERS = [
 ]
 
 // ---------------------------------------------------------------------------
-// "AI is your ally" magazine EDITIONS (one per month, past months kept).
-// Shown as a page-flip magazine inside Home. Each edition is EITHER:
-//   - kind: 'pdf'    -> `pdf` is a data URL / URL; pages rendered on demand
-//                       (react-pdf), lazy so memory stays low even at ~50 pages.
-//   - kind: 'images' -> `pages` is a list of 800x1131 image URLs.
-// The admin uploads one PDF per month (or images) and old months stay browsable.
-// `id` is a stable month key (YYYY-MM). `current` marks the edition shown first.
+// "AI is your ally" monthly EDITIONS (one per month, past months kept).
+// Each edition bundles TWO SEPARATE things:
+//   1. The IDEA FLYER (`flyer`): a single standalone image presenting one
+//      colleague's AI idea. Shown on Home next to the description + AIRO link.
+//   2. The MAGAZINE: the multi-page read shown in its own tab. Either:
+//        - kind: 'pdf'    -> `pdf` is a data URL / URL; pages rendered on demand
+//                            (react-pdf), lazy so memory stays low at ~50 pages.
+//        - kind: 'images' -> `pages` is a list of 800x1131 image URLs.
+// The admin uploads the idea flyer AND the magazine (PDF or images) per month;
+// old months stay browsable. `id` is a stable month key (YYYY-MM). `current`
+// marks the edition shown first.
+// Per-edition promo metadata (shown on Home + AI Ally header):
+//   - description : what this month's AI idea is about.
+//   - ideaAuthor  : whose idea it is (shown in the "ver mas" button label).
+//   - airoUrl     : link to the idea in the AIRO store.
 // ---------------------------------------------------------------------------
 export const AI_EDITIONS = [
   {
     id: '2026-07', label: 'Julio 2026', kind: 'images', current: true,
+    description: 'Esta edicion recopila ideas de IA para resumir casos, redactar mejor y automatizar lo repetitivo. Cada idea nace de un companero de SEPO y la convertimos en un flyer.',
+    ideaAuthor: 'davisanc',
+    airoUrl: 'https://airo.amazon.dev/',
+    flyer: svgIdeaFlyer('Resume casos', 'davisanc', '#6F367D', '#9F86D7'),
     pages: [
       svgPage('AI is your ally', 'Edicion Julio 2026', '#281b47', '#6F367D'),
       svgPage('Resume casos', 'IA para resumir tickets largos', '#6F367D', '#9F86D7'),
@@ -80,6 +110,10 @@ export const AI_EDITIONS = [
   },
   {
     id: '2026-06', label: 'Junio 2026', kind: 'images', current: false,
+    description: 'Lo basico de los prompts: como pedirle bien a la IA para obtener mejores respuestas.',
+    ideaAuthor: 'corderoo',
+    airoUrl: 'https://airo.amazon.dev/',
+    flyer: svgIdeaFlyer('Prompt basics', 'corderoo', '#594094', '#D1A0E2'),
     pages: [
       svgPage('AI is your ally', 'Edicion Junio 2026', '#281b47', '#594094'),
       svgPage('Prompt basics', 'Como pedirle bien a la IA', '#594094', '#9F86D7'),
@@ -138,6 +172,8 @@ export const TRIVIAS = [
     url: 'https://forms.office.com/r/y8uYwkyAF5',
     opensAt: '2026-07-14',
     closesAt: '2026-07-20',
+    image: '',
+    imagePos: '50% 50%',
   },
   {
     id: 'tv_2',
@@ -146,6 +182,28 @@ export const TRIVIAS = [
     url: 'https://forms.office.com/r/dqTj4MpyU7',
     opensAt: '2026-07-18',
     closesAt: '2026-07-25',
+    image: '',
+    imagePos: '50% 50%',
+  },
+  {
+    id: 'tv_3',
+    title: 'Trivia de Ciencia Ficcion',
+    description: 'Star Wars, Dune, Blade Runner y mas. Demuestra que tan geek eres.',
+    url: 'https://forms.office.com/r/y8uYwkyAF5',
+    opensAt: '2026-06-20',
+    closesAt: '2026-06-27',
+    image: '',
+    imagePos: '50% 50%',
+  },
+  {
+    id: 'tv_4',
+    title: 'Trivia de Futbol Mundial',
+    description: 'De Pele a Messi, cuanto sabes de la historia del deporte rey.',
+    url: 'https://forms.office.com/r/dqTj4MpyU7',
+    opensAt: '2026-06-01',
+    closesAt: '2026-06-08',
+    image: '',
+    imagePos: '50% 50%',
   },
 ]
 
@@ -206,74 +264,75 @@ export const AMAVERSARIES = [
 // Fields per award:
 //   id, name, cadence, description (what it is), why (why it's given),
 //   eligibility (who qualifies), example (a good nomination example),
-//   icon (Lucide name), active, order
+//   amount (gift card value in USD; ONLY shown to the R&R team, never to
+//   nominating managers), icon (Lucide name), active, order
 // ---------------------------------------------------------------------------
 export const AWARDS = [
   {
-    id: 'awd_on_the_spot', name: 'On the Spot', cadence: 'Weekly', icon: 'sparkles', active: true, order: 1,
+    id: 'awd_on_the_spot', name: 'On the Spot', cadence: 'Weekly', icon: 'sparkles', active: true, order: 1, amount: 25,
     description: 'Gift card rapida para un resultado puntual y sobresaliente de la semana.',
     why: 'Reconocer en el momento una metrica o accion destacada, sin esperar al fin de mes.',
     eligibility: 'Cualquier investigador. El manager puede darla varias veces al mes.',
     example: 'Mejor resolucion en primer contacto de la semana segun el dashboard.',
   },
   {
-    id: 'awd_summit_star', name: 'Summit Star', cadence: 'Monthly', icon: 'star', active: true, order: 1,
+    id: 'awd_summit_star', name: 'Summit Star', cadence: 'Monthly', icon: 'star', active: true, order: 1, amount: 100,
     description: 'El investigador destacado del mes por su desempeno integral en las metricas.',
     why: 'Reconocer consistencia sobresaliente en calidad y resultados durante el mes.',
     eligibility: 'Investigadores individuales. Un ganador por equipo por mes.',
     example: 'Supero todas las metas de calidad del mes manteniendo el mejor CSAT del equipo.',
   },
   {
-    id: 'awd_momentum', name: 'Momentum Award', cadence: 'Monthly', icon: 'trophy', active: true, order: 2,
+    id: 'awd_momentum', name: 'Momentum Award', cadence: 'Monthly', icon: 'trophy', active: true, order: 2, amount: 75,
     description: 'Para quien mostro la mayor mejora o impulso en el mes.',
     why: 'Premiar el progreso y el crecimiento, no solo el desempeno absoluto.',
     eligibility: 'Colaboradores que mostraron una mejora notable respecto al mes anterior.',
     example: 'Paso de estar bajo meta a liderar el equipo en resolucion en primer contacto.',
   },
   {
-    id: 'awd_rockstar', name: 'Rockstar Award', cadence: 'Quarterly', icon: 'award', active: true, order: 1,
+    id: 'awd_rockstar', name: 'Rockstar Award', cadence: 'Quarterly', icon: 'award', active: true, order: 1, amount: 250,
     description: 'El desempeno mas sobresaliente del trimestre.',
     why: 'Reconocer un impacto sostenido y de alto nivel a lo largo del trimestre.',
     eligibility: 'Colaboradores individuales con resultados excepcionales el trimestre.',
     example: 'Lidero la iniciativa de reduccion de reprocesos que ahorro 200 horas al trimestre.',
   },
   {
-    id: 'awd_innovation', name: 'Innovation Award', cadence: 'Quarterly', icon: 'idea', active: true, order: 2,
+    id: 'awd_innovation', name: 'Innovation Award', cadence: 'Quarterly', icon: 'idea', active: true, order: 2, amount: 250,
     description: 'Reconoce una idea o mejora que cambio la forma de trabajar.',
     why: 'Fomentar la innovacion (Invent and Simplify) y las mejoras de proceso.',
     eligibility: 'Cualquier colaborador o equipo con una idea implementada de impacto.',
     example: 'Creo una macro que automatizo un reporte manual diario de 30 minutos.',
   },
   {
-    id: 'awd_manager_spotlight', name: 'Manager Spotlight', cadence: 'Quarterly', icon: 'users', active: true, order: 3,
+    id: 'awd_manager_spotlight', name: 'Manager Spotlight', cadence: 'Quarterly', icon: 'users', active: true, order: 3, amount: 200,
     description: 'Reconoce a un manager por su liderazgo en el trimestre.',
     why: 'Destacar a lideres que desarrollan a su gente y dan el ejemplo.',
     eligibility: 'Managers de SEPO.',
     example: 'Su equipo tuvo la mayor mejora de engagement y cero rotacion el trimestre.',
   },
   {
-    id: 'awd_senior_spotlight', name: 'Senior Spotlight', cadence: 'Quarterly', icon: 'star', active: true, order: 4,
+    id: 'awd_senior_spotlight', name: 'Senior Spotlight', cadence: 'Quarterly', icon: 'star', active: true, order: 4, amount: 200,
     description: 'Reconoce a un colaborador senior por su mentoria e impacto.',
     why: 'Valorar a quienes elevan al equipo compartiendo experiencia.',
     eligibility: 'Colaboradores senior.',
     example: 'Mentoreo a tres nuevos ingresos que alcanzaron meta en tiempo record.',
   },
   {
-    id: 'awd_pillar', name: 'The Pillar Award', cadence: 'Annual', icon: 'trophy', active: true, order: 1,
+    id: 'awd_pillar', name: 'The Pillar Award', cadence: 'Annual', icon: 'trophy', active: true, order: 1, amount: 500,
     description: 'El maximo reconocimiento anual a un colaborador ejemplar.',
     why: 'Honrar a quien encarna los valores de SEPO durante todo el ano.',
     eligibility: 'Colaboradores individuales. Un ganador al ano.',
     example: 'Referente de cultura y resultados; el estandar que todos buscan seguir.',
   },
   {
-    id: 'awd_manager_year', name: 'Manager of the Year', cadence: 'Annual', icon: 'users', active: true, order: 2,
+    id: 'awd_manager_year', name: 'Manager of the Year', cadence: 'Annual', icon: 'users', active: true, order: 2, amount: 500,
     description: 'El mejor liderazgo del ano.',
     why: 'Reconocer al manager con el mayor impacto en su gente y resultados.',
     eligibility: 'Managers de SEPO.',
     example: 'Transformo un equipo de bajo desempeno en el numero uno de la region.',
   },
   {
-    id: 'awd_senior_year', name: 'Senior of the Year', cadence: 'Annual', icon: 'star', active: true, order: 3,
+    id: 'awd_senior_year', name: 'Senior of the Year', cadence: 'Annual', icon: 'star', active: true, order: 3, amount: 500,
     description: 'El colaborador senior mas influyente del ano.',
     why: 'Premiar el impacto tecnico y humano sostenido durante el ano.',
     eligibility: 'Colaboradores senior.',
@@ -306,24 +365,26 @@ export function periodOptions(cadence) {
   return out
 }
 
-// Tips for writing a strong nomination (shown inline in the nominate flow).
-export const NOMINATION_TIPS = [
-  'Basate en las metricas de desempeno del dashboard del investigador.',
-  'Se especifico: describe la accion o el resultado concreto.',
-  'Muestra el impacto: en el cliente, el equipo o el negocio.',
-  'Si es de un periodo anterior, marca el periodo correcto (retroactivo).',
-]
-
 // Program context shown at the top of Rewards. Reflects how VIBE runs R&R.
 export const PROGRAM_INFO = 'Los managers tienen autonomia total: revisan las metricas de sus investigadores, deciden el premio y envian la nominacion. El submission es final, no requiere aprobacion. VIBE solo recibe la nominacion y entrega el premio (gift card u otro reconocimiento), incluyendo premios de periodos anteriores.'
 
+// ---------------------------------------------------------------------------
+// R&R team: the ONLY people who can see and manage Rewards & Recognition
+// (nominations of every manager, delivery, amounts). This is a smaller circle
+// than the full VIBE admin team, on purpose: award amounts and cross-manager
+// nominations are sensitive. Edit this list to match the real R&R owners.
+// In production this becomes a flag/attribute on the vibe-roles table.
+// ---------------------------------------------------------------------------
+export const RR_MANAGERS = ['varseana', 'fiorejr', 'fccastl']
+
 // Existing nominations (demo). Reference the STABLE award id + a snapshot of the
 // award name. `deliveryStatus` tracks VIBE delivery (not approval). `retroactive`
-// marks nominations for a past period.
+// marks nominations for a past period. No `reason`: the write-up is not data we
+// keep (managers just pick who + which award).
 export const REWARDS = [
-  { id: 'rew_1', awardId: 'awd_summit_star', awardName: 'Summit Star', cadence: 'Monthly', period: 'July 2026', retroactive: false, nominee: 'davisanc', reason: 'Supero todas las metas de calidad del mes segun el dashboard.', nominatedBy: 'esarriet', deliveryStatus: 'pending' },
-  { id: 'rew_2', awardId: 'awd_on_the_spot', awardName: 'On the Spot', cadence: 'Weekly', period: 'W29 2026', retroactive: false, nominee: 'corderoo', reason: 'Mejor resolucion en primer contacto de la semana.', nominatedBy: 'munguivi', deliveryStatus: 'delivered', deliveredBy: 'varseana' },
-  { id: 'rew_3', awardId: 'awd_rockstar', awardName: 'Rockstar Award', cadence: 'Quarterly', period: 'Q1 2026', retroactive: true, nominee: 'melanny', reason: 'Mejor desempeno del Q1, entregado de forma retroactiva.', nominatedBy: 'badras', deliveryStatus: 'pending' },
+  { id: 'rew_1', awardId: 'awd_summit_star', awardName: 'Summit Star', cadence: 'Monthly', period: 'July 2026', retroactive: false, nominee: 'davisanc', nominatedBy: 'esarriet', deliveryStatus: 'pending' },
+  { id: 'rew_2', awardId: 'awd_on_the_spot', awardName: 'On the Spot', cadence: 'Weekly', period: 'W29 2026', retroactive: false, nominee: 'corderoo', nominatedBy: 'munguivi', deliveryStatus: 'delivered', deliveredBy: 'varseana' },
+  { id: 'rew_3', awardId: 'awd_rockstar', awardName: 'Rockstar Award', cadence: 'Quarterly', period: 'Q1 2026', retroactive: true, nominee: 'melanny', nominatedBy: 'badras', deliveryStatus: 'pending' },
 ]
 
 // Reward deadlines (countdown). Costa Rica time (UTC-6), 17:00 close.
@@ -332,6 +393,67 @@ export const REWARD_DEADLINES = [
   { cadence: 'Monthly', period: 'July 2026', dueAt: '2026-08-01T23:00:00Z', custom: false },
   { cadence: 'Quarterly', period: 'Q3 2026', dueAt: '2026-10-01T23:00:00Z', custom: false },
   { cadence: 'Annual', period: '2026', dueAt: '2027-01-01T23:00:00Z', custom: false },
+]
+
+// ---------------------------------------------------------------------------
+// Monthly Digest (newsletter builder)
+// ---------------------------------------------------------------------------
+// Cada digest es una edicion mensual armada por bloques modulares. Se publica
+// para que todos la vean, y se exporta como HTML para enviar por email.
+// status: 'draft' (solo admins/vibe ven) | 'published' (todos ven)
+// sections: array ordenado de bloques, cada uno con type + data especifica.
+//
+// Block types:
+//   heading  : { text }
+//   text     : { content }
+//   image    : { src, imagePos?, width (20-100, %), maxHeight (150-500, px), caption? }
+//   split    : { src, imagePos?, imageSide ('left'|'right'), imageWidth (200-400, px), title?, content }
+//   people   : { kind ('birthdays'|'amaversaries'), month, entries: [{ login, name, day, image?, years? }] }
+//   divider  : {}
+// ---------------------------------------------------------------------------
+export const DIGESTS = [
+  {
+    id: 'digest_2026-07',
+    title: 'VIBE Monthly Digest',
+    subtitle: 'Junio 2026',
+    coverMonth: 'June 2026',
+    celebrationMonth: 'July 2026',
+    status: 'published',
+    publishedAt: '2026-07-02',
+    sections: [
+      { id: 'sec_1', type: 'heading', text: 'Lo que hicimos en Junio' },
+      { id: 'sec_2', type: 'text', content: 'Este mes tuvimos 4 actividades, 2 trivias y el lanzamiento de VIBEverse. Gracias a todos los que participaron.' },
+      { id: 'sec_3', type: 'split', src: '', imagePos: '50% 50%', imageSide: 'left', imageWidth: 240, title: 'Town Hall SEPO', content: 'Mas de 200 personas conectadas en vivo. Se presento el nuevo programa de reconocimiento y los resultados del trimestre.' },
+      { id: 'sec_4', type: 'divider' },
+      { id: 'sec_5', type: 'heading', text: 'Cumple Años de Julio' },
+      { id: 'sec_6', type: 'people', kind: 'birthdays', month: 'July', entries: [
+        { login: 'melanny', name: 'Melanny', day: 20, image: '' },
+        { login: 'corderoo', name: 'Cordero', day: 12, image: '' },
+        { login: 'torrart', name: 'Arturo', day: 25, image: '' },
+        { login: 'davisanc', name: 'David', day: 4, image: '' },
+        { login: 'yordanob', name: 'Yordano', day: 28, image: '' },
+      ]},
+      { id: 'sec_7', type: 'heading', text: 'Amaversarios de Julio' },
+      { id: 'sec_8', type: 'people', kind: 'amaversaries', month: 'July', entries: [
+        { login: 'varseana', name: 'Sean Vargas', day: 8, image: '', years: 3 },
+        { login: 'fccastl', name: 'Francini Lobo', day: 15, image: '', years: 5 },
+        { login: 'jasaguer', name: 'Jay Aguero', day: 22, image: '', years: 2 },
+      ]},
+    ],
+  },
+  {
+    id: 'digest_2026-06',
+    title: 'VIBE Monthly Digest',
+    subtitle: 'Mayo 2026',
+    coverMonth: 'May 2026',
+    celebrationMonth: 'June 2026',
+    status: 'draft',
+    publishedAt: null,
+    sections: [
+      { id: 'sec_a', type: 'heading', text: 'Resumen de Mayo' },
+      { id: 'sec_b', type: 'text', content: 'Borrador en progreso.' },
+    ],
+  },
 ]
 
 // Role allowlist - login -> role. Editable in /admin. Default is 'collaborator'.
