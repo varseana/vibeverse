@@ -202,6 +202,29 @@ Cuatro roles con rango jerarquico:
 - Los `Guard` en App.jsx protegen rutas por rango minimo. IMPORTANTE: ocultar tabs
   y guardar rutas es solo UX; la seguridad real la hace el backend (ver BACKEND.md).
 
+### Gate de entrada (EntryGate) y perfil
+- **`src/components/EntryGate.jsx`**: popup de arranque tematica universo que
+  BLOQUEA la app hasta elegir rol. La app ya esta montada y se ve difuminada
+  detras (`.app.gated` -> blur + pointer-events:none). Tres caminos: investigador
+  (entra directo), manager y VIBE (login mock **admin / admin**). Diseno: mundo
+  central "gigante gaseoso" (SVG feTurbulence) + halo pulsante + doble anillo
+  punteado contrarrotante; el logo de VIBE gira con el planeta morado. Colores:
+  investigador azul, manager naranja, VIBE morado. Transicion warp al entrar.
+  Procedural/local, sin red (el entorno bloquea DNS; por eso no hay API de
+  planetas ni imagenes externas). CSS reutiliza las clases `.gl-*` en styles.css.
+- **Estado en `auth.jsx`**: `entered` (persistido en localStorage
+  `vibe_gate_entered`), `enterAs(roleKey)` (mapea gate->login demo via
+  `GATE_LOGIN` y marca entrado), `logout()` (vuelve al gate). El gate se muestra
+  una sola vez por navegador hasta hacer logout.
+- **ProfileMenu** (App.jsx): reemplazo del viejo `RoleSwitcher`. Chip de perfil
+  arriba a la derecha (avatar con iniciales + login + badge de rol) con dropdown
+  cuya unica accion es **Cerrar sesion** (llama `logout`, regresa al gate). Para
+  cambiar de rol se sale y se re-entra por el gate. `DEMO_USERS` sigue exportado
+  en auth.jsx por si se necesita, pero ya no hay selector de usuario en la UI.
+- Cuando llegue Midway: `enterAs`/login mock se reemplaza por SSO; el investigador
+  sigue entrando directo. Queda un preview de variantes en la ruta oculta `/gate`
+  (`GateLab.jsx`) por si se quiere iterar el diseno; no es el gate real.
+
 ---
 
 ## 5. Content store (`src/lib/store.jsx`)

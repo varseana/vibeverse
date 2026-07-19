@@ -1,12 +1,13 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'motion/react'
 import Lenis from 'lenis'
-import { useAuth, DEMO_USERS, ROLES } from './lib/auth.jsx'
+import { useAuth, ROLES } from './lib/auth.jsx'
 import Icon from './components/Icon.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import GalaxyBackground from './components/GalaxyBackground.jsx'
 import FloatingLogo from './components/FloatingLogo.jsx'
+import EntryGate from './components/EntryGate.jsx'
 import logo from './assets/vibe-logo.png'
 
 import Home from './pages/Home.jsx'
@@ -22,6 +23,9 @@ const AiAlly = lazy(() => import('./pages/AiAlly.jsx'))
 // Admin carries the heaviest editor (block builder + dnd-kit). Only admins ever
 // open it, so lazy-load it to keep the main bundle light for everyone else.
 const Admin = lazy(() => import('./pages/Admin.jsx'))
+// Hidden preview of the entry gate (role popup) variants. Lazy so it never
+// weighs down the main bundle.
+const GateLab = lazy(() => import('./pages/GateLab.jsx'))
 
 // Route guard: show a friendly notice if the user's rank is below the required.
 function Guard({ min, children }) {
@@ -37,16 +41,35 @@ function Guard({ min, children }) {
   return children
 }
 
-function RoleSwitcher() {
-  const { login, setLogin, role, roleLabel } = useAuth()
+// Profile chip with a dropdown. For now the only action is logging out (which
+// returns to the entry gate). Room to grow (settings, etc.) later.
+function ProfileMenu() {
+  const { login, role, roleLabel, logout } = useAuth()
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [open])
+  const initials = login.slice(0, 2).toUpperCase()
   return (
-    <div className="role-switch">
-      <span className={`role-badge ${role}`}>{roleLabel}</span>
-      <select value={login} onChange={(e) => setLogin(e.target.value)} title="Cambiar de usuario (demo)">
-        {DEMO_USERS.map((u) => (
-          <option key={u.login} value={u.login}>{u.name}</option>
-        ))}
-      </select>
+    <div className="profile-menu">
+      <button className="profile-chip" onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }} title="Perfil">
+        <span className={`profile-avatar ${role}`}>{initials}</span>
+        <span className="profile-meta">
+          <span className="profile-login">{login}</span>
+          <span className={`role-badge ${role}`}>{roleLabel}</span>
+        </span>
+        <Icon name={open ? 'prev' : 'next'} size={13} />
+      </button>
+      {open && (
+        <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+          <button className="profile-item logout" onClick={logout}>
+            <Icon name="external" size={14} /> Cerrar sesion
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -63,7 +86,7 @@ function useSmoothScroll() {
 }
 
 export default function App() {
-  const { isManager, isAdmin } = useAuth()
+  const { isManager, isAdmin, entered } = useAuth()
   const location = useLocation()
   useSmoothScroll()
 
@@ -75,7 +98,8 @@ export default function App() {
   )
 
   return (
-    <div className="app">
+    <>
+    <div className={`app ${entered ? '' : 'gated'}`} aria-hidden={entered ? undefined : 'true'}>
       <GalaxyBackground />
       <FloatingLogo />
       <header className="topbar">
@@ -97,7 +121,7 @@ export default function App() {
           {isAdmin && link('/admin', 'settings', 'Admin')}
         </nav>
         <div className="spacer" />
-        <RoleSwitcher />
+        <ProfileMenu />
       </header>
 
       <main className="content">
@@ -108,6 +132,8 @@ export default function App() {
             <Route path="/trivias" element={<PageTransition><Trivias /></PageTransition>} />
             <Route path="/ai-ally" element={<PageTransition><Suspense fallback={<div className="mag-cover"><div className="mag-cover-inner"><div className="skeleton skeleton-fill" /></div></div>}><AiAlly /></Suspense></PageTransition>} />
             <Route path="/monthly-digest" element={<PageTransition><MonthlyDigest /></PageTransition>} />
+            {/* Ruta oculta: preview del gate de entrada (sin link en el nav) */}
+            <Route path="/gate" element={<PageTransition><Suspense fallback={<div className="empty">Cargando...</div>}><GateLab /></Suspense></PageTransition>} />
             <Route path="/manager-hub" element={<PageTransition><Guard min="manager"><ManagerHub /></Guard></PageTransition>} />
             <Route path="/people" element={<PageTransition><Guard min="manager"><People /></Guard></PageTransition>} />
             <Route path="/admin" element={<PageTransition><Guard min="admin"><Suspense fallback={<div className="empty">Cargando editor...</div>}><Admin /></Suspense></Guard></PageTransition>} />
@@ -116,5 +142,12 @@ export default function App() {
         </AnimatePresence>
       </main>
     </div>
+
+    {/* Entry gate: blocks all interaction until the user picks a role. The app
+        above is already mounted and blurred behind it. */}
+    <AnimatePresence>
+      {!entered && <EntryGate key="entry-gate" />}
+    </AnimatePresence>
+    </>
   )
 }
