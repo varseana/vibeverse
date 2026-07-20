@@ -1,18 +1,21 @@
 import { fmtDate } from '../lib/format.js'
 import { eventState, deadlineState } from '../lib/eventState.js'
 import Icon from './Icon.jsx'
+import { AdminEditButton } from './AdminEdit.jsx'
 
 // Horizontal banner for Home: text on the LEFT, the event image on the RIGHT.
 // The image fades (gradient mask) into the card so it blends toward the text.
 // If there is no image, it falls back to a plain text banner. Sizing is driven
 // by the card height, and the image column scales with it.
-export default function EventBanner({ ev }) {
+// `adminTab` (opt-in): VIBE-only edit shortcut for this event.
+export default function EventBanner({ ev, adminTab = null }) {
   const state = eventState(ev)
   const dl = deadlineState(ev)
   const hasImg = !!ev.image
 
   return (
     <div className={`event-banner ${hasImg ? 'has-img' : ''}`}>
+      {adminTab && <AdminEditButton tab={adminTab} id={ev.id} title="Editar este evento (VIBE)" />}
       <div className="event-banner-text">
         {state === 'live'
           ? <span className="tag live"><Icon name="live" size={12} /> EN VIVO</span>

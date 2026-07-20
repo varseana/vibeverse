@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAuth } from '../lib/auth.jsx'
 import Icon from './Icon.jsx'
+import { sfx } from '../lib/sfx.js'
 import logo from '../assets/vibe-logo.png'
 
 // ---------------------------------------------------------------------------
@@ -96,9 +97,11 @@ function LoginPanel({ role, onBack, onDone }) {
     e.preventDefault()
     if (user === 'admin' && pass === 'admin') {
       // animacion de "ingresando" antes de disparar la transicion (warp).
+      sfx.play('save')
       setPhase('auth')
       setTimeout(() => onDone(), 1100)
     } else {
+      sfx.play('error')
       setErr(true)
     }
   }
@@ -207,8 +210,8 @@ export default function EntryGate() {
   // (3) entrar a la app. Nada de destello mientras los tabs siguen visibles.
   const launch = (role) => {
     setLeaving(true)
-    setTimeout(() => setWarp(true), 480)          // el fade del contenido ya termino
-    setTimeout(() => enterAs(role.key), 480 + 640) // el destello alcanzo a lucirse
+    setTimeout(() => { setWarp(true); sfx.play('warp') }, 480) // el fade del contenido ya termino
+    setTimeout(() => enterAs(role.key), 480 + 640)             // el destello alcanzo a lucirse
   }
 
   return (

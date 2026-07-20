@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../lib/store.jsx'
 import { fmtDate } from '../lib/format.js'
 import Icon from '../components/Icon.jsx'
+import { AdminEditBar, AdminEditButton } from '../components/AdminEdit.jsx'
 
 // fecha demo (misma que eventState.js usa)
 const NOW = new Date('2026-07-15T12:00:00')
@@ -27,6 +28,8 @@ export default function Trivias() {
         <p>Participa en las trivias de VIBE. Se abren en Microsoft Forms.</p>
       </div>
 
+      <AdminEditBar tab="Trivias" label="trivias" />
+
       {/* toggle live / past */}
       <div className="subtabs" style={{ marginBottom: 20 }}>
         <button className={tab === 'live' ? 'active' : ''} onClick={() => setTab('live')}>
@@ -49,6 +52,7 @@ export default function Trivias() {
             const ended = !isLive(t)
             return (
               <div key={t.id} className={`card hover trivia-card ${ended ? 'trivia-ended' : ''}`} style={{ position: 'relative', overflow: 'hidden' }}>
+                <AdminEditButton tab="Trivias" id={t.id} title="Editar esta trivia (VIBE)" />
                 {/* imagen de fondo a la derecha con fade */}
                 {t.image && (
                   <img className="trivia-bg" src={t.image} alt="" style={{ objectPosition: t.imagePos || '50% 50%' }} />

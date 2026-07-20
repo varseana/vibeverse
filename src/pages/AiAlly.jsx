@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../lib/store.jsx'
 import Magazine from '../components/Magazine.jsx'
 import Icon from '../components/Icon.jsx'
+import { AdminEditBar } from '../components/AdminEdit.jsx'
 
 // "AI is your ally" magazine, in its own public tab. Because this whole route
 // is code-split (React.lazy in App), pdf.js and the flip engine only load when
@@ -40,6 +41,8 @@ export default function AiAlly() {
           </select>
         )}
       </div>
+
+      <AdminEditBar tab="AI Ally" label="ediciones" />
 
       {/* Magazine: large on desktop, hidden on mobile (flip needs a wide screen) */}
       <div className="mag-desktop-only">

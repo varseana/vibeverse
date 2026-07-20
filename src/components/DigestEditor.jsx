@@ -18,6 +18,7 @@ import {
 import Icon from './Icon.jsx'
 import ImagePositioner from './ImagePositioner.jsx'
 import PhotoCropper from './PhotoCropper.jsx'
+import { sfx } from '../lib/sfx.js'
 
 // block types que el user puede agregar
 const BLOCK_TYPES = [
@@ -949,7 +950,7 @@ export default function DigestEditor({ digest, onSave }) {
     saveTimer.current = setTimeout(() => {
       onSave(next)
       setSaveStatus('saving')
-      setTimeout(() => setSaveStatus('saved'), 300)
+      setTimeout(() => { setSaveStatus('saved'); sfx.play('save') }, 300)
     }, 1500)
   }
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current) }, [])
@@ -1095,7 +1096,7 @@ export default function DigestEditor({ digest, onSave }) {
         {saveStatus === 'unsaved' && (
           <button className="btn ghost sm" onClick={saveNow}>Guardar ahora</button>
         )}
-        <button className="btn ghost sm" onClick={() => setPreview(true)} title="Ver como quedara, sin controles">
+        <button className="btn ghost sm" onClick={() => { sfx.play('dash'); setPreview(true) }} title="Ver como quedara, sin controles">
           <Icon name="external" size={13} /> Vista previa
         </button>
       </div>

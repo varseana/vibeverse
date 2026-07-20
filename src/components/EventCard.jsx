@@ -1,13 +1,16 @@
 import { fmtDate } from '../lib/format.js'
 import { eventState, deadlineState } from '../lib/eventState.js'
 import Icon from './Icon.jsx'
+import { AdminEditButton } from './AdminEdit.jsx'
 
 // Event card that optionally shows the admin-uploaded image as a background,
 // either blurred or solid, at the chosen opacity. Text sits above a scrim so it
 // stays readable. Used by Calendar, Home and Monthly Digest for consistency.
 // The `owner` is internal VIBE info: never shown here (public views). Only the
 // admin panel exposes owners.
-export default function EventCard({ ev, showDeadline = true }) {
+// `adminTab` (opt-in): when set, shows a VIBE-only edit shortcut for this event
+// deep-linking to that Admin tab. Off by default so shared usages stay clean.
+export default function EventCard({ ev, showDeadline = true, adminTab = null }) {
   const state = eventState(ev)
   const dl = showDeadline ? deadlineState(ev) : null
   const hasBg = !!ev.image
@@ -15,7 +18,8 @@ export default function EventCard({ ev, showDeadline = true }) {
   const blur = (ev.imageMode || 'blur') === 'blur'
 
   return (
-    <div className={`card ${hasBg ? 'has-bg' : ''}`}>
+    <div className={`card ${hasBg ? 'has-bg' : ''}`} style={adminTab ? { position: 'relative' } : undefined}>
+      {adminTab && <AdminEditButton tab={adminTab} id={ev.id} title="Editar este evento (VIBE)" />}
       {hasBg && (
         <div
           className="card-bg"

@@ -3,6 +3,7 @@ import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'motion/react'
 import Lenis from 'lenis'
 import { useAuth, ROLES } from './lib/auth.jsx'
+import { sfx } from './lib/sfx.js'
 import Icon from './components/Icon.jsx'
 import PageTransition from './components/PageTransition.jsx'
 import GalaxyBackground from './components/GalaxyBackground.jsx'
@@ -41,11 +42,11 @@ function Guard({ min, children }) {
   return children
 }
 
-// Profile chip with a dropdown. For now the only action is logging out (which
-// returns to the entry gate). Room to grow (settings, etc.) later.
+// Profile chip with a dropdown: mute toggle for UI sounds + log out.
 function ProfileMenu() {
   const { login, role, roleLabel, logout } = useAuth()
   const [open, setOpen] = useState(false)
+  const [muted, setMuted] = useState(() => sfx.isMuted())
   useEffect(() => {
     if (!open) return
     const close = () => setOpen(false)
@@ -53,6 +54,11 @@ function ProfileMenu() {
     return () => window.removeEventListener('click', close)
   }, [open])
   const initials = login.slice(0, 2).toUpperCase()
+  const toggleSound = () => {
+    const nowMuted = sfx.toggleMuted()
+    setMuted(nowMuted)
+    if (!nowMuted) sfx.play('toggle') // dar feedback audible al re-activar
+  }
   return (
     <div className="profile-menu">
       <button className="profile-chip" onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }} title="Perfil">
@@ -65,7 +71,10 @@ function ProfileMenu() {
       </button>
       {open && (
         <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-          <button className="profile-item logout" onClick={logout}>
+          <button className="profile-item" data-sfx="off" onClick={toggleSound}>
+            <Icon name={muted ? 'live' : 'sparkles'} size={14} /> {muted ? 'Activar sonido' : 'Silenciar sonido'}
+          </button>
+          <button className="profile-item logout" data-sfx="delete" onClick={logout}>
             <Icon name="external" size={14} /> Cerrar sesion
           </button>
         </div>
@@ -89,6 +98,8 @@ export default function App() {
   const { isManager, isAdmin, entered } = useAuth()
   const location = useLocation()
   useSmoothScroll()
+  // Sonido global: un solo delegador da feedback a cualquier click/hover interactivo.
+  useEffect(() => { sfx.initGlobal() }, [])
 
   const link = (to, name, label, end = false) => (
     <NavLink to={to} end={end}>

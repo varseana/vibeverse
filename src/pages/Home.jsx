@@ -8,6 +8,7 @@ import FlyerCarousel from '../components/FlyerCarousel.jsx'
 import EventBanner from '../components/EventBanner.jsx'
 import AiAllyPromo from '../components/AiAllyPromo.jsx'
 import Icon from '../components/Icon.jsx'
+import { AdminEditBar, AdminEditButton } from '../components/AdminEdit.jsx'
 
 function SectionTitle({ icon, children }) {
   return (
@@ -42,11 +43,17 @@ export default function Home() {
   return (
     <div>
       {/* Flyer carousel with the home-featured image centered */}
-      {show('flyers') && <FlyerCarousel />}
+      {show('flyers') && (
+        <>
+          <AdminEditBar tab="Flyers" label="flyers" />
+          <FlyerCarousel />
+        </>
+      )}
 
       {/* Latest pinned news */}
       {show('news') && pinned && (
-        <div className="hero">
+        <div className="hero" style={{ position: 'relative' }}>
+          <AdminEditButton tab="Noticias" id={pinned.id} title="Editar esta noticia (VIBE)" />
           <span className="tag">{pinned.tag}</span>
           <h1><span>{pinned.title}</span></h1>
           <p>{pinned.body}</p>
@@ -59,7 +66,7 @@ export default function Home() {
         <>
           <SectionTitle icon="live">En vivo ahora</SectionTitle>
           <div className="grid cols-2">
-            {live.map((e) => <EventBanner key={e.id} ev={e} />)}
+            {live.map((e) => <EventBanner key={e.id} ev={e} adminTab="Calendario" />)}
           </div>
         </>
       )}
@@ -90,6 +97,7 @@ export default function Home() {
           <div className="grid cols-2">
             {trivias.map((t) => (
               <a key={t.id} className="card hover trivia-card" href={t.url} target="_blank" rel="noreferrer" style={{ position: 'relative', overflow: 'hidden' }}>
+                <AdminEditButton tab="Trivias" id={t.id} title="Editar esta trivia (VIBE)" />
                 {t.image && <img className="trivia-bg" src={t.image} alt="" style={{ objectPosition: t.imagePos || '50% 50%' }} />}
                 <div className="trivia-content">
                   <span className="tag"><Icon name="brain" size={12} /> Trivia</span>
@@ -109,6 +117,7 @@ export default function Home() {
       {show('links') && shownLinks.length > 0 && (
         <>
           <SectionTitle icon="sparkles">Accesos rapidos</SectionTitle>
+          <AdminEditBar tab="Accesos rapidos" label="accesos rapidos" />
           <div className="grid cols-4" ref={linksRef}>
             {shownLinks.map((l) => {
               const internal = l.url.startsWith('#')
@@ -135,7 +144,8 @@ export default function Home() {
           <SectionTitle icon="news">Mas noticias</SectionTitle>
           <div className="grid cols-2" ref={newsRef}>
             {rest.map((n) => (
-              <div key={n.id} className="card">
+              <div key={n.id} className="card" style={{ position: 'relative' }}>
+                <AdminEditButton tab="Noticias" id={n.id} title="Editar esta noticia (VIBE)" />
                 <span className="tag">{n.tag}</span>
                 <h3>{n.title}</h3>
                 <p>{n.body}</p>
@@ -150,6 +160,7 @@ export default function Home() {
       {show('aiAlly') && currentEdition && (
         <>
           <SectionTitle icon="idea">AI is your ally</SectionTitle>
+          <AdminEditBar tab="AI Ally" label="ediciones" />
           <AiAllyPromo edition={currentEdition} />
         </>
       )}

@@ -1216,3 +1216,50 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
     animation: none; transition: none;
   }
 }
+
+/* ===========================================================================
+   AdminEdit: atajos de edicion in-situ para el equipo VIBE (invisibles al resto)
+   =========================================================================== */
+/* barra de seccion */
+.admin-edit-bar {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 8px 6px 10px; margin-bottom: 12px;
+  background: rgba(159, 134, 215, 0.08);
+  border: 1px dashed var(--panel-brd); border-radius: var(--radius);
+}
+.admin-edit-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--vibe-2);
+}
+
+/* lapiz por item (esquina de un card; el card debe ser position:relative) */
+.admin-edit-btn {
+  position: absolute; top: 8px; right: 8px; z-index: 6;
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff;
+  background: linear-gradient(135deg, var(--vibe), var(--vibe-2));
+  border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--radius-sm);
+  box-shadow: 0 4px 14px var(--vibe-glow);
+  opacity: 0; transform: translateY(-2px) scale(0.9);
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* aparece al pasar el mouse sobre el card contenedor, o al enfocar el boton */
+.card:hover > .admin-edit-btn,
+.trivia-card:hover > .admin-edit-btn,
+.event-banner:hover > .admin-edit-btn,
+.hero:hover > .admin-edit-btn,
+.admin-edit-btn:focus-visible {
+  opacity: 1; transform: translateY(0) scale(1);
+}
+.admin-edit-btn:hover { filter: brightness(1.12); }
+
+/* highlight temporal del item enfocado por deep-link (?focus=<id>) */
+@keyframes adminFocusPulse {
+  0% { box-shadow: 0 0 0 1px var(--vibe), 0 0 0 6px var(--vibe-glow); }
+  100% { box-shadow: 0 0 0 1px transparent, 0 0 0 0 transparent; }
+}
+.admin-focus-hit {
+  animation: adminFocusPulse 2.4s ease-out;
+  border-radius: var(--radius);
+}

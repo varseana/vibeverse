@@ -6,6 +6,7 @@ import { useStore } from '../lib/store.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { countdown } from '../lib/format.js'
 import Icon from '../components/Icon.jsx'
+import { sfx } from '../lib/sfx.js'
 
 // Format a gift-card amount (USD). Only shown to the R&R team.
 const fmtAmount = (a) => (typeof a === 'number' ? `$${a}` : '')
@@ -128,7 +129,7 @@ export default function RewardsSection() {
           awards={activeAwards}
           showAmounts={isRewardsManager}
           onClose={() => setShowModal(false)}
-          onSave={(r) => { setRewards((prev) => [{ ...r, id: 'rew_' + Date.now() }, ...prev]); setShowModal(false) }}
+          onSave={(r) => { sfx.play('nominate'); setRewards((prev) => [{ ...r, id: 'rew_' + Date.now() }, ...prev]); setShowModal(false) }}
         />
       )}
     </div>
@@ -249,6 +250,7 @@ function NominateModal({ login, awards, showAmounts, onClose, onSave }) {
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button
             className="btn"
+            data-sfx="off"
             disabled={!nominee || !award}
             onClick={() => onSave({ awardId: award.id, awardName: award.name, cadence, period, retroactive: isRetro, nominee, nominatedBy: login, deliveryStatus: 'pending' })}
           >Enviar nominacion</button>

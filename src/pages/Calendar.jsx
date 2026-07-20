@@ -4,6 +4,7 @@ import { eventState, byDate, NOW } from '../lib/eventState.js'
 import Icon from '../components/Icon.jsx'
 import EventCard from '../components/EventCard.jsx'
 import SuggestActivity from '../components/SuggestActivity.jsx'
+import { AdminEditBar } from '../components/AdminEdit.jsx'
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
@@ -65,6 +66,8 @@ export default function Calendar() {
         <p>Todos los eventos, trivias y actividades de SEPO en un solo lugar.</p>
       </div>
 
+      <AdminEditBar tab="Calendario" label="eventos" />
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <button className="btn ghost sm" onClick={() => move(-1)}><Icon name="prev" size={18} /></button>
         <h2 style={{ minWidth: 200, textAlign: 'center' }}>{MONTHS[view.m]} {view.y}</h2>
@@ -109,7 +112,7 @@ export default function Calendar() {
       <div className="grid cols-2">
         {upcoming.length === 0 ? (
           <div className="empty">No hay eventos proximos.</div>
-        ) : upcoming.map((e) => <EventCard key={e.id} ev={e} />)}
+        ) : upcoming.map((e) => <EventCard key={e.id} ev={e} adminTab="Calendario" />)}
       </div>
 
       <SuggestActivity />

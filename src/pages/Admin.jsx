@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { ROLE_ALLOWLIST, LINK_ICON_OPTIONS, CADENCES } from '../data/seed.js'
@@ -50,6 +50,57 @@ export default function Admin() {
       {tab === 'Roles' && <RolesAdmin />}
     </div>
   )
+}
+
+// ---------------------------------------------------------------------------
+// useAdminFocus: soporte de deep-link ?focus=<id|new> para una seccion.
+// - `items` es la coleccion de esa seccion (para saber si el focus le pertenece).
+// - opts.setEditing(id): abre el editor inline de ese item, si la seccion lo tiene.
+// Devuelve { focusId, refFor(id) }: asigna refFor(item.id) al card para que el
+// hook pueda hacer scroll + resaltarlo. Solo actua una vez por cambio de focus.
+// ---------------------------------------------------------------------------
+function useAdminFocus(section, items, opts = {}) {
+  const [params, setParams] = useSearchParams()
+  const focusId = params.get('focus')
+  const refs = useRef({})
+  const done = useRef(null)
+  const setEditing = opts.setEditing
+
+  // Does this focus belong to this section? ('new' always does; an id only if
+  // it exists in this section's items, so other sections ignore it.)
+  const mine = focusId === 'new'
+    ? true
+    : focusId
+      ? items.some((it) => it.id === focusId)
+      : false
+
+  useEffect(() => {
+    if (!focusId || !mine || done.current === focusId) return
+    done.current = focusId
+    if (focusId !== 'new' && setEditing) setEditing(focusId)
+    // Wait a tick so the (now-open) editor has laid out before scrolling.
+    const t = setTimeout(() => {
+      const el = refs.current[focusId] || refs.current.new
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.classList.remove('admin-focus-hit')
+        // reflow so the animation re-triggers even for the same node
+        void el.offsetWidth
+        el.classList.add('admin-focus-hit')
+      }
+      // Clean the param so navigating within Admin does not re-trigger.
+      const next = new URLSearchParams(params)
+      next.delete('focus')
+      setParams(next, { replace: true })
+    }, 90)
+    return () => clearTimeout(t)
+  }, [focusId, mine]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const refFor = useCallback((id) => (node) => {
+    if (node) refs.current[id] = node
+  }, [])
+
+  return { focusId: mine ? focusId : null, refFor }
 }
 
 /* --------------------------- Home sections (show/hide) --------------------------- */
@@ -116,6 +167,8 @@ function FlyersAdmin() {
   const [listRef] = useAutoAnimate()
   // editor holds which flyer we are editing: 'new' for the add form, or a flyer id.
   const [editor, setEditor] = useState(null)
+  // Deep-link focus: /admin?tab=Flyers&focus=<id|new> hace scroll + resalta.
+  const { refFor } = useAdminFocus('flyers', flyers)
 
   const addFlyer = () => {
     if (!title || !image) return
@@ -131,7 +184,7 @@ function FlyersAdmin() {
 
   return (
     <div className="grid cols-2">
-      <div className="card">
+      <div className="card" ref={refFor('new')}>
         <h3>Nuevo flyer</h3>
         <label>Titulo</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Nombre del flyer" />
@@ -155,7 +208,7 @@ function FlyersAdmin() {
 
       <div ref={listRef}>
         {flyers.map((f) => (
-          <div key={f.id} className="card" style={{ marginBottom: 12 }}>
+          <div key={f.id} className="card" style={{ marginBottom: 12 }} ref={refFor(f.id)}>
             <img src={f.image} alt={f.title} className="flyer-thumb" />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <strong style={{ flex: 1 }}>{f.title}</strong>
@@ -187,10 +240,13 @@ function NewsAdmin() {
   const [body, setBody] = useState('')
   const [tag, setTag] = useState('Noticia')
   const [listRef] = useAutoAnimate()
+  // Deep-link focus: /admin?tab=Noticias&focus=<id|new> hace scroll + resalta.
+  // (Los campos de cada noticia ya estan siempre visibles, no hay editor colapsable.)
+  const { refFor } = useAdminFocus('news', news)
 
   return (
     <div className="grid cols-2">
-      <div className="card">
+      <div className="card" ref={refFor('new')}>
         <h3>Nueva noticia</h3>
         <label>Titulo</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -206,7 +262,7 @@ function NewsAdmin() {
       </div>
       <div ref={listRef}>
         {news.map((n) => (
-          <div key={n.id} className="card" style={{ marginBottom: 12 }}>
+          <div key={n.id} className="card" style={{ marginBottom: 12 }} ref={refFor(n.id)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span className="tag" style={{ margin: 0 }}>{n.tag}</span>
               {n.pinned && <span className="home-badge">DESTACADA</span>}
@@ -236,8 +292,12 @@ function EventsAdmin() {
   const [listRef] = useAutoAnimate()
   const blank = { title: '', date: '2026-07-20', endDate: '', type: 'Evento', owner: 'varseana', deadline: '', deadlineLabel: '', image: '', imageMode: 'blur', imageOpacity: 0.5 }
   const [form, setForm] = useState(blank)
-  const [editorFor, setEditorFor] = useState(null) // 'new' | event id | null
+  const [editorFor, setEditorFor] = useState(null) // 'new' | event id | null (editor de imagen)
+  const [editing, setEditing] = useState(null)      // id del evento con campos abiertos
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  // Deep-link focus: /admin?tab=Calendario&focus=<id|new> abre el editor de campos,
+  // hace scroll y resalta el evento.
+  const { refFor } = useAdminFocus('events', events, { setEditing })
 
   const addEvent = () => {
     if (!form.title || !form.date) return
@@ -259,7 +319,7 @@ function EventsAdmin() {
 
   return (
     <div className="grid cols-2">
-      <div className="card">
+      <div className="card" ref={refFor('new')}>
         <h3>Nuevo evento o actividad</h3>
         <label>Titulo</label>
         <input value={form.title} maxLength={50} onChange={(e) => set('title', e.target.value)} />
@@ -308,7 +368,7 @@ function EventsAdmin() {
 
       <div ref={listRef}>
         {events.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((e) => (
-          <div key={e.id} className="card" style={{ marginBottom: 10 }}>
+          <div key={e.id} className="card" style={{ marginBottom: 10 }} ref={refFor(e.id)}>
             {e.image && (
               <div style={{ marginBottom: 8 }}>
                 <img src={e.image} alt="" className="flyer-thumb" style={{ aspectRatio: '16 / 9', filter: e.imageMode === 'blur' ? 'blur(2px)' : 'none', opacity: e.imageOpacity ?? 0.5 }} />
@@ -331,10 +391,41 @@ function EventsAdmin() {
                 <Icon name="clock" size={11} /> {e.deadlineLabel || 'Deadline'}: {e.deadline}
               </div>
             )}
-            {!e.image && (
-              <button className="btn ghost sm" style={{ marginTop: 8 }} onClick={() => setEditorFor(e.id)}>
-                <Icon name="image" size={14} /> Subir imagen
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+              <button className="btn ghost sm" onClick={() => setEditing(editing === e.id ? null : e.id)}>
+                <Icon name="settings" size={13} /> {editing === e.id ? 'Cerrar' : 'Editar'}
               </button>
+              <button className="btn ghost sm" onClick={() => setEditorFor(e.id)}>
+                <Icon name="image" size={14} /> {e.image ? 'Cambiar imagen' : 'Subir imagen'}
+              </button>
+            </div>
+
+            {editing === e.id && (
+              <div style={{ marginTop: 10, borderTop: '1px solid var(--panel-brd)', paddingTop: 10 }}>
+                <label>Titulo</label>
+                <input value={e.title} maxLength={50} onChange={(ev) => update('events', e.id, { title: ev.target.value })} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <label>Fecha de inicio</label>
+                    <input type="date" value={e.date} onChange={(ev) => update('events', e.id, { date: ev.target.value })} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label>Fecha de fin (opcional)</label>
+                    <input type="date" value={e.endDate || ''} onChange={(ev) => update('events', e.id, { endDate: ev.target.value })} />
+                  </div>
+                </div>
+                <label>Tipo</label>
+                <select value={e.type} onChange={(ev) => update('events', e.id, { type: ev.target.value })}>
+                  {['Evento', 'Trivia', 'En vivo', 'Flyer', 'Concurso', 'Deadline'].map((t) => <option key={t}>{t}</option>)}
+                </select>
+                <label>Owner (login)</label>
+                <input value={e.owner || ''} onChange={(ev) => update('events', e.id, { owner: ev.target.value })} placeholder="ej. varseana" />
+                <label>Fecha limite (deadline, opcional)</label>
+                <input type="date" value={e.deadline || ''} onChange={(ev) => update('events', e.id, { deadline: ev.target.value })} />
+                <label>Que significa el deadline</label>
+                <input value={e.deadlineLabel || ''} onChange={(ev) => update('events', e.id, { deadlineLabel: ev.target.value })} placeholder="ej. Cierre de inscripcion" />
+              </div>
             )}
           </div>
         ))}
@@ -376,10 +467,12 @@ function LinksAdmin() {
   const [icon, setIcon] = useState('link')
   const [managerOnly, setManagerOnly] = useState(false)
   const [listRef] = useAutoAnimate()
+  // Deep-link focus: /admin?tab=Accesos rapidos&focus=<id|new> hace scroll + resalta.
+  const { refFor } = useAdminFocus('links', links)
 
   return (
     <div className="grid cols-2">
-      <div className="card">
+      <div className="card" ref={refFor('new')}>
         <h3>Nuevo acceso rapido</h3>
         <label>Etiqueta</label>
         <input value={label} onChange={(e) => setLabel(e.target.value)} />
@@ -411,7 +504,7 @@ function LinksAdmin() {
       </div>
       <div ref={listRef}>
         {links.map((l) => (
-          <div key={l.id} className="card" style={{ marginBottom: 10 }}>
+          <div key={l.id} className="card" style={{ marginBottom: 10 }} ref={refFor(l.id)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span className="ql-icon" style={{ width: 36, height: 36, margin: 0 }}><Icon name={l.icon} size={18} /></span>
               <strong style={{ flex: 1 }}>{l.label}</strong>
@@ -727,6 +820,8 @@ function TriviasAdmin() {
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(null)
   const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setError('') }
+  // Deep-link focus: /admin?tab=Trivias&focus=<id|new> abre y resalta el item.
+  const { refFor } = useAdminFocus('trivias', trivias, { setEditing })
 
   const addTrivia = () => {
     if (!form.title) { setError('Falta el titulo'); return }
@@ -739,7 +834,7 @@ function TriviasAdmin() {
   return (
     <div>
       {/* formulario compacto arriba */}
-      <div className="card" style={{ marginBottom: 20 }}>
+      <div className="card" style={{ marginBottom: 20 }} ref={refFor('new')}>
         <h3 style={{ marginBottom: 8 }}>Nueva trivia</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
           <div>
@@ -792,7 +887,7 @@ function TriviasAdmin() {
       ) : (
         <div className="grid cols-2" ref={listRef}>
           {trivias.map((t) => (
-            <div key={t.id} className="card" style={{ fontSize: 13 }}>
+            <div key={t.id} className="card" style={{ fontSize: 13 }} ref={refFor(t.id)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                 <span className="tag" style={{ margin: 0, fontSize: 11 }}><Icon name="brain" size={11} /> Trivia</span>
                 <span style={{ flex: 1, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>

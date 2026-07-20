@@ -1,5 +1,6 @@
 import { useStore } from '../lib/store.jsx'
 import Icon from '../components/Icon.jsx'
+import { AdminEditBar } from '../components/AdminEdit.jsx'
 
 export default function People() {
   const { birthdays, amaversaries } = useStore()
@@ -13,6 +14,8 @@ export default function People() {
         <h1>Cumple Años y Amaversarios</h1>
         <p>Celebra a tu equipo este mes. Visible para managers.</p>
       </div>
+
+      <AdminEditBar tab="Cumpleanos" label="cumpleanos y amaversarios" />
 
       <div className="section-title"><Icon name="cake" size={15} /><span>Cumple Años de Julio</span></div>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
