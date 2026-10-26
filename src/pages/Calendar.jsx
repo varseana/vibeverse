@@ -73,46 +73,52 @@ export default function Calendar() {
         <h2 style={{ minWidth: 200, textAlign: 'center' }}>{MONTHS[view.m]} {view.y}</h2>
         <button className="btn ghost sm" onClick={() => move(1)}><Icon name="next" size={18} /></button>
         <button className="btn ghost sm" onClick={() => setView({ y: 2026, m: 6 })}>Hoy</button>
+        <div className="cal-legend" style={{ marginLeft: 'auto', marginBottom: 0 }}>
+          <span><i className="dot ev" /> Evento</span>
+          <span><i className="dot live" /> En vivo</span>
+          <span><i className="dot dl" /> Deadline</span>
+        </div>
       </div>
 
-      <div className="cal-legend">
-        <span><i className="dot ev" /> Evento</span>
-        <span><i className="dot live" /> En vivo</span>
-        <span><i className="dot dl" /> Deadline</span>
-      </div>
-
-      <div className="cal-grid">
-        {DAYS.map((d) => <div key={d} className="cal-head">{d}</div>)}
-        {cells.map((d, i) => (
-          <div key={i} className={`cal-cell ${d && isToday(d) ? 'today' : ''}`} style={{ visibility: d ? 'visible' : 'hidden' }}>
-            {d && <div className="cal-day">{d}</div>}
-            {d && (byDay[d] || []).map((item, idx) => {
-              if (item.kind === 'deadline') {
-                return (
-                  <div key={idx} className="cal-ev dl" title={`${item.ev.deadlineLabel || 'Deadline'}: ${item.ev.title}`}>
-                    {item.ev.deadlineLabel || 'Deadline'}
-                  </div>
-                )
-              }
-              const live = eventState(item.ev) === 'live'
-              return (
-                <div key={idx} className={`cal-ev ${live ? 'live' : ''}`} title={item.ev.title}>
-                  {item.ev.image && (
-                    <img src={item.ev.image} alt="" className="cal-ev-thumb" />
-                  )}
-                  <span className="cal-ev-title">{item.ev.title}</span>
-                </div>
-              )
-            })}
+      {/* Mes a la izquierda, proximos eventos en un rail con scroll propio */}
+      <div className="cal-board">
+        <div className="cal-main">
+          <div className="cal-grid">
+            {DAYS.map((d) => <div key={d} className="cal-head">{d}</div>)}
+            {cells.map((d, i) => (
+              <div key={i} className={`cal-cell ${d && isToday(d) ? 'today' : ''}`} style={{ visibility: d ? 'visible' : 'hidden' }}>
+                {d && <div className="cal-day">{d}</div>}
+                {d && (byDay[d] || []).map((item, idx) => {
+                  if (item.kind === 'deadline') {
+                    return (
+                      <div key={idx} className="cal-ev dl" title={`${item.ev.deadlineLabel || 'Deadline'}: ${item.ev.title}`}>
+                        {item.ev.deadlineLabel || 'Deadline'}
+                      </div>
+                    )
+                  }
+                  const live = eventState(item.ev) === 'live'
+                  return (
+                    <div key={idx} className={`cal-ev ${live ? 'live' : ''}`} title={item.ev.title}>
+                      {item.ev.image && (
+                        <img src={item.ev.image} alt="" className="cal-ev-thumb" />
+                      )}
+                      <span className="cal-ev-title">{item.ev.title}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      <div className="section-title"><Icon name="calendar" size={15} /><span>Proximos eventos</span></div>
-      <div className="grid cols-2">
-        {upcoming.length === 0 ? (
-          <div className="empty">No hay eventos proximos.</div>
-        ) : upcoming.map((e) => <EventCard key={e.id} ev={e} adminTab="Calendario" />)}
+        <aside className="cal-rail" data-lenis-prevent>
+          <div className="section-title"><Icon name="calendar" size={15} /><span>Proximos eventos</span></div>
+          <div className="stack">
+            {upcoming.length === 0 ? (
+              <div className="empty">No hay eventos proximos.</div>
+            ) : upcoming.map((e) => <EventCard key={e.id} ev={e} adminTab="Calendario" />)}
+          </div>
+        </aside>
       </div>
 
       <SuggestActivity />

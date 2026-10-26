@@ -147,7 +147,8 @@ h1, h2, h3, .brand-name { font-family: var(--font-display); }
 }
 .profile-item.logout:hover { background: rgba(226, 113, 143, 0.14); color: var(--bad); }
 
-.content { max-width: 1520px; margin: 0 auto; padding: 28px 36px 60px; width: 100%; position: relative; z-index: 1; }
+/* sin z-index: los overlays de modal deben tapar tambien el sidebar */
+.content { padding: 28px 40px 60px; width: 100%; position: relative; }
 
 /* ---------- shared components ---------- */
 .page-head { margin-bottom: 22px; }
@@ -293,14 +294,16 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .hero p { color: var(--muted); margin-top: 8px; font-size: 16px; }
 
 /* calendar */
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+/* minmax(0,1fr): los titulos largos no ensanchan columnas */
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .cal-head { text-align: center; font-size: 12px; color: var(--muted); font-weight: 700; padding: 6px; }
 .cal-cell { min-height: 92px; background: var(--panel); border: 1px solid var(--panel-brd); border-radius: var(--radius); padding: 6px; font-size: 12px; }
 .cal-cell.today { border-color: var(--vibe); box-shadow: inset 0 0 0 1px var(--vibe); }
 .cal-day { font-weight: 700; color: var(--muted); margin-bottom: 4px; }
 .cal-ev { display: flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 5px; border-radius: var(--radius-sm); margin-bottom: 3px; background: rgba(159, 134, 215,0.25); overflow: hidden; }
 .cal-ev.live { background: rgba(255,92,114,0.3); }
-.cal-ev.dl { background: rgba(240, 198, 116, 0.22); color: #f0d9a8; border-left: 2px solid var(--warn); }
+/* deadline: todo el chip en ambar, sin franja */
+.cal-ev.dl { background: rgba(240, 198, 116, 0.28); color: #f0d9a8; }
 /* tiny event thumbnail inside a calendar cell (never overflows the box) */
 .cal-ev-thumb { width: 14px; height: 14px; border-radius: 2px; object-fit: cover; flex-shrink: 0; }
 .cal-ev-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -369,7 +372,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   border-radius: var(--radius); padding: 20px; margin-bottom: 8px;
 }
 .ally-promo-flyer {
-  flex: 1 1 0; min-width: 0; min-height: 260px; border-radius: var(--radius); overflow: hidden;
+  /* el flyer ocupa su proporcion real, no media pantalla */
+  flex: 0 0 200px; aspect-ratio: 800 / 1131; min-width: 0; border-radius: var(--radius); overflow: hidden;
   border: 1px solid var(--panel-brd); background: var(--bg-2);
 }
 .ally-promo-flyer img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -377,10 +381,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   width: 100%; height: 100%; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 8px; color: var(--vibe);
 }
-.ally-promo-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* texto centrado en vertical, botones pegados a la descripcion */
+.ally-promo-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
 .ally-promo-body h3 { font-size: 22px; font-family: var(--font-display); }
-.ally-promo-desc { color: var(--muted); font-size: 14px; line-height: 1.55; }
-.ally-promo-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 8px; }
+.ally-promo-desc { color: var(--muted); font-size: 15px; line-height: 1.55; max-width: 62ch; }
+.ally-promo-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 8px; }
 
 /* magazine visibility: interactive flip on desktop only */
 .mag-desktop-only { display: block; }
@@ -401,9 +406,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 /* closed cover: shows only page 1 until the reader opens the magazine */
 .mag-cover { display: flex; justify-content: center; padding: 10px 0; }
 .mag-cover-inner {
-  position: relative; width: 100%; max-width: 550px; aspect-ratio: 800 / 1131;
+  /* la portada mide la altura disponible, sin scroll de pagina */
+  position: relative; width: auto; max-width: 100%; aspect-ratio: 800 / 1131;
+  height: min(calc(100vh / var(--ui-zoom, 1) - 250px), 1100px);
   border-radius: var(--radius); overflow: hidden; border: 1px solid var(--panel-brd);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.45); background: var(--bg-2);
+  background: var(--bg-2);
 }
 .mag-cover-inner img, .mag-cover-inner .react-pdf__Page, .mag-cover-inner canvas {
   width: 100% !important; height: 100% !important; object-fit: cover; display: block;
@@ -413,7 +420,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px;
   border: none; border-radius: var(--radius); font-weight: 700; font-size: 14px; color: #fff;
   background: linear-gradient(90deg, var(--vibe), var(--vibe-2));
-  box-shadow: 0 6px 22px var(--vibe-glow); transition: transform 0.18s, filter 0.18s;
+  transition: transform 0.18s, filter 0.18s;
 }
 .mag-open:hover { transform: translateX(-50%) translateY(-2px); filter: brightness(1.08); }
 .mag-open:active { transform: translateX(-50%) translateY(0); }
@@ -552,7 +559,7 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: none; b
 /* ---------- flyer carousel (coverflow) ---------- */
 .carousel { margin-bottom: 24px; }
 .carousel-stage {
-  position: relative; width: 100%; max-height: 440px;
+  position: relative; width: 100%; max-height: 560px;
   display: flex; align-items: center; justify-content: center;
   overflow: hidden; border-radius: var(--radius-lg);
 }
@@ -773,10 +780,11 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border: none; b
 
 /* digest: cumple wave (conic-gradient rotation) */
 .digest-frame-wave {
-  position: relative; overflow: visible;
+  /* el giro queda dentro del marco, no tapa el nombre */
+  position: relative; overflow: hidden;
 }
 .digest-frame-wave::before {
-  content: ''; position: absolute; inset: -3px;
+  content: ''; position: absolute; inset: -40%;
   border-radius: inherit;
   background: conic-gradient(from 0deg, #9F86D7, #22d3ee, #fb7185, #fbbf24, #6fe0a8, #9F86D7);
   animation: digestWaveRotate 3s linear infinite;
@@ -853,9 +861,9 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
 /* digest aurora animated backdrop */
 .digest-aurora-wrap {
   border-radius: var(--radius-lg);
-  padding: 30px 36px;
-  margin: -28px -36px;
-  min-height: 100%;
+  padding: 30px 40px 60px;
+  margin: -28px -40px -60px;
+  min-height: calc(100vh / var(--ui-zoom, 1));
   position: relative;
 }
 .digest-aurora-wrap::before {
@@ -1280,6 +1288,10 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
   grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
 }
 .home-main, .home-rail { min-width: 0; }
+/* rail fijo: acompana el scroll de la columna principal */
+.home-rail { position: sticky; top: 0; max-height: calc(100vh / var(--ui-zoom, 1) - 56px); overflow-y: auto; padding-right: 4px; }
+/* tablero: noticias y trivias siempre en pares, sin huerfanas */
+.home-main .grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .home-main > .section-title:first-child,
 .home-rail > .section-title:first-child { margin-top: 0; }
 
@@ -1288,20 +1300,78 @@ input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
 .stack { display: grid; gap: 10px; }
 .ql-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .ql-grid .ql-card { padding: 14px 10px; }
+.ql-grid .ql-card h3 { min-height: 2.5em; display: flex; align-items: center; justify-content: center; }
 .ql-grid .ql-icon { width: 40px; height: 40px; margin-bottom: 8px; }
 .home-main .hero { padding: 28px 30px; }
 .home-main .hero h1 { font-size: 30px; }
-/* en el tablero el flyer de AI ocupa su proporcion real, no media pantalla */
-.home-main .ally-promo-flyer { flex: 0 0 240px; aspect-ratio: 800 / 1131; min-height: 0; }
 /* las etiquetas miden su texto, no se estiran como franja */
 .event-banner-text .tag, .ally-promo-body .tag { align-self: flex-start; }
 
+/* Calendario como tablero: mes + rail de proximos con scroll propio */
+.cal-board { display: grid; gap: 24px; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); }
+.cal-main { min-width: 0; }
+.cal-rail { position: sticky; top: 0; max-height: calc(100vh / var(--ui-zoom, 1) - 40px); overflow-y: auto; }
+.cal-rail > .section-title:first-child { margin-top: 0; }
+.cal-cell { min-width: 0; min-height: 108px; }
+
+/* auto-fill: una sola trivia no se estira a todo el ancho */
+.trivia-grid { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.trivia-grid .trivia-card { min-height: 190px; }
+
+/* nominacion: pie fijo abajo, monto y boton en una fila */
+.nom-card { display: flex; flex-direction: column; }
+.nom-foot { margin-top: auto; padding-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.nom-foot:empty { display: none; }
+.nom-foot .reward-amount { margin-top: 0; }
+
+/* Manager Hub: recursos compactos, icono a la izquierda */
+.mh-res .ql-card { display: grid; grid-template-columns: 48px 1fr; column-gap: 14px; text-align: left; align-content: start; }
+.mh-res .ql-icon { margin: 0; grid-row: 1 / span 3; }
+.mh-res .ql-card .btn { justify-self: start; }
+
+/* digest: lectura a la izquierda, rail de ediciones a la derecha */
+.digest-layout { display: grid; grid-template-columns: minmax(0, 960px) minmax(220px, 280px); gap: 48px; align-items: start; }
+.digest-layout .digest-body { margin: 0; max-width: none; }
+.digest-rail { position: sticky; top: 24px; }
+.digest-rail .section-title { margin-top: 0; }
+.digest-rail-list { display: flex; flex-direction: column; gap: 6px; }
+.digest-rail-list .btn { width: 100%; justify-content: space-between; }
+
+/* modales altos: el overlay scrollea en vez de cortar el modal */
+.overlay { overflow-y: auto; align-items: flex-start; }
+.overlay > .modal { margin: auto; }
+
+/* Admin: editor fijo a la izquierda, lista en grilla a la derecha */
+.admin-split { display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(360px, 460px) minmax(0, 1fr); }
+.admin-split > .card:first-child { position: sticky; top: 20px; max-height: calc(100vh / var(--ui-zoom, 1) - 40px); overflow-y: auto; }
+.admin-split-list { display: grid; gap: 12px; align-items: start; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+.admin-split-list > .card { margin-bottom: 0 !important; }
+.admin-split-list > .empty { grid-column: 1 / -1; }
+/* pestanas de Admin en una sola linea */
+.admin-tabs { flex-wrap: nowrap; overflow-x: auto; margin-bottom: 20px; scrollbar-width: thin; }
+.admin-tabs a { white-space: nowrap; }
+
 @media (max-width: 1180px) {
+  .admin-split { grid-template-columns: 1fr; }
+  .admin-split > .card:first-child { position: static; max-height: none; }
+  .digest-layout { grid-template-columns: minmax(0, 1fr); }
+  .digest-rail { position: static; }
   .home-board { grid-template-columns: minmax(0, 1fr); }
+  .home-rail, .cal-rail { position: static; max-height: none; overflow: visible; }
+  .cal-board { grid-template-columns: minmax(0, 1fr); }
 
   .home-rail .stack { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
   .ql-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 }
+
+/* Escritorio primero: en monitores grandes todo escala para no verse diminuto.
+   Solo se escala el chrome y el contenido; el fondo y el logo flotante no. */
+@media (min-width: 1600px) { :root { --ui-zoom: 1.08; } }
+@media (min-width: 1880px) { :root { --ui-zoom: 1.16; } }
+@media (min-width: 2400px) { :root { --ui-zoom: 1.32; } }
+.sidebar, .content { zoom: var(--ui-zoom, 1); }
+/* zoom tambien escala 100vh: compensar para que el sidebar mida la ventana */
+.sidebar { height: calc(100vh / var(--ui-zoom, 1)); }
 
 /* pantallas angostas: el sidebar se vuelve una barra superior desplazable */
 @media (max-width: 860px) {

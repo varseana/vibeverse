@@ -47,7 +47,7 @@ export default function Trivias() {
             : 'No hay trivias pasadas todavia.'}
         </div>
       ) : (
-        <div className="grid cols-2">
+        <div className="grid trivia-grid">
           {shown.map((t) => {
             const ended = !isLive(t)
             return (

@@ -111,7 +111,7 @@ export default function Home() {
       </div>
 
       {/* Rail lateral: lo que pasa ahora y los atajos */}
-      <aside className="home-rail">
+      <aside className="home-rail" data-lenis-prevent>
         {/* Live now */}
         {show('live') && live.length > 0 && (
           <>

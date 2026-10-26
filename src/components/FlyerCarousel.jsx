@@ -61,7 +61,7 @@ export default function FlyerCarousel() {
     return rel
   }
 
-  const slideW = Math.min(stageW * 0.72, 900)
+  const slideW = Math.min(stageW * 0.8, 1200)
   const stageH = slideW * 42 / 96
   const sideShift = slideW * 0.52
 

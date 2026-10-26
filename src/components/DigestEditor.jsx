@@ -19,6 +19,7 @@ import Icon from './Icon.jsx'
 import ImagePositioner from './ImagePositioner.jsx'
 import PhotoCropper from './PhotoCropper.jsx'
 import { sfx } from '../lib/sfx.js'
+import { uiZoom } from '../lib/uiZoom.js'
 
 // block types que el user puede agregar
 const BLOCK_TYPES = [
@@ -91,7 +92,8 @@ function SortableColumn({ column, rowId, canRemove, onUpdate, onRemove, onDuplic
     return () => window.removeEventListener('click', close)
   }, [changing])
   const style = {
-    transform: CSS.Transform.toString(transform),
+    // dnd-kit mide en px de pantalla; el contenido esta escalado por --ui-zoom
+    transform: CSS.Transform.toString(transform && { ...transform, x: transform.x / uiZoom(), y: transform.y / uiZoom() }),
     transition,
     flexGrow: column.span,
     flexBasis: 0,

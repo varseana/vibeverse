@@ -86,7 +86,7 @@ function ProfileMenu() {
 // Smooth "buttery" scrolling via Lenis, wired to requestAnimationFrame.
 function useSmoothScroll() {
   useEffect(() => {
-    const lenis = new Lenis({ duration: 1.1, smoothWheel: true })
+    const lenis = new Lenis({ duration: 1.1, smoothWheel: true, allowNestedScroll: true })
     let id
     const raf = (t) => { lenis.raf(t); id = requestAnimationFrame(raf) }
     id = requestAnimationFrame(raf)

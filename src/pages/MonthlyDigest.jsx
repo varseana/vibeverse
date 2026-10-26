@@ -77,38 +77,41 @@ export default function MonthlyDigest() {
         )}
       </div>
 
-      <div className="digest-body">
-        {normalizeRows(digest.sections).map((row, idx) => (
-          <motion.div
-            key={row.id}
-            className="digest-pub-row"
-            initial={{ opacity: 0, x: idx % 2 === 0 ? -40 : 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ duration: 0.6, ease: 'easeOut', delay: idx * 0.08 }}
-          >
-            {row.columns.map((col) => (
-              <div key={col.id} className="digest-pub-col" style={{ flexGrow: col.span, flexBasis: 0, minWidth: 0 }}>
-                <DigestBlock block={col.block} index={idx} />
-              </div>
-            ))}
-          </motion.div>
-        ))}
-      </div>
-
-      {visible.length > 1 && (
-        <div style={{ marginTop: 40 }}>
-          <div className="section-title"><Icon name="clock" size={15} /><span>Ediciones anteriores</span></div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {visible.filter((d) => d.id !== digest?.id).map((d) => (
-              <button key={d.id} className="btn ghost sm" onClick={() => setActiveId(d.id)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {d.subtitle}
-                {d.status === 'draft' && isVibe && <span className="pill badge-warn" style={{ fontSize: 9, padding: '1px 5px' }}>draft</span>}
-              </button>
-            ))}
-          </div>
+      {/* lectura a la izquierda (ancho de newsletter), ediciones en un rail fijo */}
+      <div className="digest-layout">
+        <div className="digest-body">
+          {normalizeRows(digest.sections).map((row, idx) => (
+            <motion.div
+              key={row.id}
+              className="digest-pub-row"
+              initial={{ opacity: 0, x: idx % 2 === 0 ? -40 : 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: idx * 0.08 }}
+            >
+              {row.columns.map((col) => (
+                <div key={col.id} className="digest-pub-col" style={{ flexGrow: col.span, flexBasis: 0, minWidth: 0 }}>
+                  <DigestBlock block={col.block} index={idx} />
+                </div>
+              ))}
+            </motion.div>
+          ))}
         </div>
-      )}
+
+        {visible.length > 1 && (
+          <aside className="digest-rail">
+            <div className="section-title"><Icon name="clock" size={15} /><span>Ediciones</span></div>
+            <div className="digest-rail-list">
+              {visible.map((d) => (
+                <button key={d.id} className={`btn sm ${d.id === digest?.id ? '' : 'ghost'}`} onClick={() => setActiveId(d.id)}>
+                  {d.subtitle}
+                  {d.status === 'draft' && isVibe && <span className="pill badge-warn" style={{ fontSize: 9, padding: '1px 5px' }}>draft</span>}
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   )
 }

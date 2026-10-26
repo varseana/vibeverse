@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import Icon from './Icon.jsx'
+import { uiZoom } from '../lib/uiZoom.js'
 
 // overlay de crop cuadrado 1:1 para ajustar fotos de personas.
 // recibe un src (data URL o URL), permite drag + zoom, y devuelve
@@ -28,12 +29,12 @@ export default function PhotoCropper({ src, onDone, onCancel }) {
   }, [dispW, dispH])
 
   const onPointerDown = (e) => {
-    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y }
+    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, z: uiZoom() }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e) => {
     if (!drag.current) return
-    setPos(clamp({ x: drag.current.ox + (e.clientX - drag.current.sx), y: drag.current.oy + (e.clientY - drag.current.sy) }))
+    setPos(clamp({ x: drag.current.ox + (e.clientX - drag.current.sx) / drag.current.z, y: drag.current.oy + (e.clientY - drag.current.sy) / drag.current.z }))
   }
   const onPointerUp = () => { drag.current = null }
 

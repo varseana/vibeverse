@@ -90,7 +90,7 @@ export default function RewardsSection() {
               {visible.map((r) => {
                 const amount = amountFor(r.awardId)
                 return (
-                <div key={r.id} className="card">
+                <div key={r.id} className="card nom-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
                     <span className="tag"><Icon name="award" size={12} /> {r.awardName}</span>
                     <span className={`pill ${r.deliveryStatus === 'delivered' ? 'badge-good' : 'badge-warn'}`}>
@@ -102,19 +102,21 @@ export default function RewardsSection() {
                     {r.cadence}, {r.period}, por {r.nominatedBy}
                     {r.retroactive && <span className="pill retro"><Icon name="clock" size={11} /> Retroactivo</span>}
                   </p>
-                  {/* Amount is R&R-team only (they own the budget). */}
-                  {isRewardsManager && typeof amount === 'number' && (
-                    <div className="reward-amount"><Icon name="trophy" size={13} /> {fmtAmount(amount)}</div>
-                  )}
-                  {/* Only the R&R team can mark delivery. Managers just see status. */}
-                  {isRewardsManager && r.deliveryStatus !== 'delivered' && (
-                    <button className="btn sm" style={{ marginTop: 12 }} onClick={() => markDelivered(r.id)}>
-                      <Icon name="award" size={14} /> Marcar como entregado
-                    </button>
-                  )}
-                  {r.deliveryStatus === 'delivered' && r.deliveredBy && (
-                    <p className="muted" style={{ marginTop: 8, fontSize: 11 }}>Entregado por {r.deliveredBy}</p>
-                  )}
+                  <div className="nom-foot">
+                    {/* Amount is R&R-team only (they own the budget). */}
+                    {isRewardsManager && typeof amount === 'number' && (
+                      <div className="reward-amount"><Icon name="trophy" size={13} /> {fmtAmount(amount)}</div>
+                    )}
+                    {/* Only the R&R team can mark delivery. Managers just see status. */}
+                    {isRewardsManager && r.deliveryStatus !== 'delivered' && (
+                      <button className="btn sm" onClick={() => markDelivered(r.id)}>
+                        <Icon name="award" size={14} /> Marcar como entregado
+                      </button>
+                    )}
+                    {r.deliveryStatus === 'delivered' && r.deliveredBy && (
+                      <p className="muted" style={{ fontSize: 11 }}>Entregado por {r.deliveredBy}</p>
+                    )}
+                  </div>
                 </div>
                 )
               })}

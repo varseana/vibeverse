@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import Icon from './Icon.jsx'
+import { uiZoom } from '../lib/uiZoom.js'
 
 // Instagram-style image editor. The user picks a file, then drags to reposition
 // and uses a slider to zoom inside a frame with a configurable aspect ratio.
@@ -48,13 +49,13 @@ export default function ImageEditor({ onDone, onCancel, aspectRatio = 96 / 42, o
   }, [dispW, dispH, frameW, frameH])
 
   const onPointerDown = (e) => {
-    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y }
+    drag.current = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, z: uiZoom() }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e) => {
     if (!drag.current) return
-    const nx = drag.current.ox + (e.clientX - drag.current.sx)
-    const ny = drag.current.oy + (e.clientY - drag.current.sy)
+    const nx = drag.current.ox + (e.clientX - drag.current.sx) / drag.current.z
+    const ny = drag.current.oy + (e.clientY - drag.current.sy) / drag.current.z
     setPos(clamp({ x: nx, y: ny }))
   }
   const onPointerUp = () => { drag.current = null }

@@ -31,7 +31,7 @@ export default function ManagerHub() {
         El envio de ideas y aprobaciones se coordina por Slack.
       </div>
 
-      <div className="grid cols-3">
+      <div className="grid cols-3 mh-res">
         {cards.map((c, i) => (
           <a key={i} className="card hover ql-card" href={c.url} target="_blank" rel="noreferrer">
             <div className="ql-icon"><Icon name={c.icon} size={22} /></div>

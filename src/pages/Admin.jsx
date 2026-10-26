@@ -29,7 +29,7 @@ export default function Admin() {
         <p>Gestiona el contenido de VIBEverse. Solo equipo VIBE.</p>
       </div>
 
-      <div className="nav" style={{ marginBottom: 20 }}>
+      <div className="nav admin-tabs">
         {TABS.map((t) => (
           <a key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)} style={{ cursor: 'pointer' }}>{t}</a>
         ))}
@@ -183,7 +183,7 @@ function FlyersAdmin() {
   }
 
   return (
-    <div className="grid cols-2">
+    <div className="admin-split">
       <div className="card" ref={refFor('new')}>
         <h3>Nuevo flyer</h3>
         <label>Titulo</label>
@@ -206,7 +206,7 @@ function FlyersAdmin() {
         <button className="btn" style={{ marginTop: 14 }} onClick={addFlyer}><Icon name="plus" size={16} /> Agregar al carrusel</button>
       </div>
 
-      <div ref={listRef}>
+      <div className="admin-split-list" ref={listRef}>
         {flyers.map((f) => (
           <div key={f.id} className="card" style={{ marginBottom: 12 }} ref={refFor(f.id)}>
             <img src={f.image} alt={f.title} className="flyer-thumb" />
@@ -245,7 +245,7 @@ function NewsAdmin() {
   const { refFor } = useAdminFocus('news', news)
 
   return (
-    <div className="grid cols-2">
+    <div className="admin-split">
       <div className="card" ref={refFor('new')}>
         <h3>Nueva noticia</h3>
         <label>Titulo</label>
@@ -260,7 +260,7 @@ function NewsAdmin() {
           setTitle(''); setBody('')
         }}><Icon name="plus" size={16} /> Publicar</button>
       </div>
-      <div ref={listRef}>
+      <div className="admin-split-list" ref={listRef}>
         {news.map((n) => (
           <div key={n.id} className="card" style={{ marginBottom: 12 }} ref={refFor(n.id)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -318,7 +318,7 @@ function EventsAdmin() {
   }
 
   return (
-    <div className="grid cols-2">
+    <div className="admin-split">
       <div className="card" ref={refFor('new')}>
         <h3>Nuevo evento o actividad</h3>
         <label>Titulo</label>
@@ -366,7 +366,7 @@ function EventsAdmin() {
         <button className="btn" style={{ marginTop: 14 }} onClick={addEvent}><Icon name="plus" size={16} /> Agregar</button>
       </div>
 
-      <div ref={listRef}>
+      <div className="admin-split-list" ref={listRef}>
         {events.slice().sort((a, b) => (a.date || '').localeCompare(b.date || '')).map((e) => (
           <div key={e.id} className="card" style={{ marginBottom: 10 }} ref={refFor(e.id)}>
             {e.image && (
@@ -471,7 +471,7 @@ function LinksAdmin() {
   const { refFor } = useAdminFocus('links', links)
 
   return (
-    <div className="grid cols-2">
+    <div className="admin-split">
       <div className="card" ref={refFor('new')}>
         <h3>Nuevo acceso rapido</h3>
         <label>Etiqueta</label>
@@ -502,7 +502,7 @@ function LinksAdmin() {
           setLabel(''); setUrl(''); setIcon('link'); setManagerOnly(false)
         }}><Icon name="plus" size={16} /> Agregar</button>
       </div>
-      <div ref={listRef}>
+      <div className="admin-split-list" ref={listRef}>
         {links.map((l) => (
           <div key={l.id} className="card" style={{ marginBottom: 10 }} ref={refFor(l.id)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -574,7 +574,7 @@ function AiAllyAdmin() {
           <div style={{ marginBottom: 20 }}><AiAllyPromo edition={previewEd} /></div>
         </>
       )}
-      <div className="grid cols-2">
+      <div className="admin-split">
       <div className="card">
         <h3>Nueva edicion mensual (la revista)</h3>
         <div className="notice" style={{ fontSize: 12, margin: '4px 0 12px' }}>
@@ -595,7 +595,7 @@ function AiAllyAdmin() {
         {!label && <p className="muted" style={{ marginTop: 10, fontSize: 12 }}>Escribe la etiqueta antes de subir.</p>}
       </div>
 
-      <div ref={listRef}>
+      <div className="admin-split-list" ref={listRef}>
         {editions.length === 0 && <div className="empty">No hay ediciones. Sube la primera.</div>}
         {editions.map((ed) => (
           <div key={ed.id} className="card" style={{ marginBottom: 10 }}>
@@ -1191,7 +1191,7 @@ function DigestAdmin() {
       {sorted.length === 0 ? (
         <div className="empty">No hay digests. Crea el primero.</div>
       ) : (
-        <div className="grid cols-2">
+        <div className="admin-split-list">
           {sorted.map((d) => (
             <div key={d.id} className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
