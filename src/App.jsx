@@ -113,7 +113,9 @@ export default function App() {
     <div className={`app ${entered ? '' : 'gated'}`} aria-hidden={entered ? undefined : 'true'}>
       <GalaxyBackground />
       <FloatingLogo />
-      <header className="topbar">
+      {/* Sidebar fija: marca arriba, navegacion vertical, perfil abajo. Deja todo
+          el ancho de la pantalla para el contenido. */}
+      <aside className="sidebar">
         <div className="brand">
           <img src={logo} alt="VIBE" />
           <div>
@@ -122,19 +124,32 @@ export default function App() {
           </div>
         </div>
         <nav className="nav">
-          {link('/', 'home', 'Inicio', true)}
-          {link('/calendar', 'calendar', 'Calendario')}
-          {link('/trivias', 'brain', 'Trivias')}
-          {link('/ai-ally', 'idea', 'AI is your ally')}
-          {link('/monthly-digest', 'news', 'Monthly Digest')}
-          {isManager && link('/manager-hub', 'target', 'Manager Hub')}
-          {isManager && link('/people', 'cake', 'Cumpleanos')}
-          {isAdmin && link('/admin', 'settings', 'Admin')}
+          <div className="nav-group">
+            {link('/', 'home', 'Inicio', true)}
+            {link('/calendar', 'calendar', 'Calendario')}
+            {link('/trivias', 'brain', 'Trivias')}
+            {link('/ai-ally', 'idea', 'AI is your ally')}
+            {link('/monthly-digest', 'news', 'Monthly Digest')}
+          </div>
+          {isManager && (
+            <div className="nav-group">
+              <div className="nav-label">Managers</div>
+              {link('/manager-hub', 'target', 'Manager Hub')}
+              {link('/people', 'cake', 'Cumpleanos')}
+            </div>
+          )}
+          {isAdmin && (
+            <div className="nav-group">
+              <div className="nav-label">Equipo VIBE</div>
+              {link('/admin', 'settings', 'Admin')}
+            </div>
+          )}
         </nav>
         <div className="spacer" />
         <ProfileMenu />
-      </header>
+      </aside>
 
+      <div className="main">
       <main className="content">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -152,6 +167,7 @@ export default function App() {
           </Routes>
         </AnimatePresence>
       </main>
+      </div>
     </div>
 
     {/* Entry gate: blocks all interaction until the user picks a role. The app
